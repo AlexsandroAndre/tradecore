@@ -1,24 +1,103 @@
-# Compiled class file
+### Maven ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Logs do Maven
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+out/
+.idea_modules/
+
+### Eclipse ###
+.project
+.classpath
+.settings/
+bin/
+.tmp/
+
+### VS Code ###
+.vscode/
+
+### Arquivos de build / Java ###
 *.class
-
-# Log file
 *.log
-
-# BlueJ files
 *.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Relatórios de cobertura
+jacoco.exec
+*.ec
+*.clover
+coverage/
+site/
+
+### Sistema operacional ###
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.cache/
+*.swp
+*.swo
+
+### Docker ###
+# Imagens geradas/artifacts locais
+docker-compose.override.yml
+.docker/
+docker/logs/
+docker-data/
+tmp/
+
+### Arquivos de ambiente / segredos ###
+.env
+.env.*
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# Chaves / configs sensíveis
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+*.crt
+
+### Ferramentas diversas ###
+# IntelliJ / Lombok / Annotation Processors
+*.factorypath
+
+# SonarQube
+.sonar/
+.report/
+
+# Testes
+test-output/
+surefire-reports/
+failsafe-reports/
+
+### Logs gerais ###
+*.log
+logs/
+log/
+
