@@ -17,17 +17,23 @@ public final class StreamPipelineEngine {
     }
 
     public ProcessingReport execute(Stream<Transaction> transactionStream) {
+        BatchResultAggregator aggregator = new BatchResultAggregator();
+
+        batchProcessor.processStreamInBatches(transactionStream, aggregator::aggregateBatch);
+
+        return aggregator.build();
+    }
+
+    public ProcessingReport executeFromList(List<Transaction> transactions) {
         long startTime = System.currentTimeMillis();
 
-        List<Transaction> allTransactions = transactionStream.toList();
-
-        List<Batch> batches = batchProcessor.groupIntoBatches(allTransactions);
+        List<Batch> batches = batchProcessor.groupIntoBatches(transactions);
 
         List<BatchProcessingResult> batchResults = batchProcessor.executeBatches(batches);
 
         long executionTime = System.currentTimeMillis() - startTime;
 
-        return aggregateResults(allTransactions.size(), batchResults, executionTime);
+        return aggregateResults(transactions.size(), batchResults, executionTime);
     }
 
     private ProcessingReport aggregateResults(

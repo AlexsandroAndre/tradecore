@@ -59,10 +59,12 @@ class StreamPipelineEngineTest {
         List<BatchProcessingResult> results = new ArrayList<>();
         results.add(BatchProcessingResult.success("batch-1", 5, 100L));
 
-        when(batchProcessor.groupIntoBatches(any()))
-            .thenReturn(batches);
-        when(batchProcessor.executeBatches(any()))
-            .thenReturn(results);
+        doAnswer(invocation -> {
+            Stream<Transaction> stream = invocation.getArgument(0);
+            java.util.function.Consumer<BatchProcessingResult> consumer = invocation.getArgument(1);
+            results.forEach(consumer);
+            return null;
+        }).when(batchProcessor).processStreamInBatches(any(), any());
 
         ProcessingReport report = engine.execute(transactions.stream());
 
@@ -88,10 +90,11 @@ class StreamPipelineEngineTest {
             new ArrayList<>()
         ));
 
-        when(batchProcessor.groupIntoBatches(any()))
-            .thenReturn(batches);
-        when(batchProcessor.executeBatches(any()))
-            .thenReturn(results);
+        doAnswer(invocation -> {
+            java.util.function.Consumer<BatchProcessingResult> consumer = invocation.getArgument(1);
+            results.forEach(consumer);
+            return null;
+        }).when(batchProcessor).processStreamInBatches(any(), any());
 
         ProcessingReport report = engine.execute(transactions.stream());
 
@@ -124,10 +127,11 @@ class StreamPipelineEngineTest {
             new ArrayList<>()
         ));
 
-        when(batchProcessor.groupIntoBatches(any()))
-            .thenReturn(batches);
-        when(batchProcessor.executeBatches(any()))
-            .thenReturn(results);
+        doAnswer(invocation -> {
+            java.util.function.Consumer<BatchProcessingResult> consumer = invocation.getArgument(1);
+            results.forEach(consumer);
+            return null;
+        }).when(batchProcessor).processStreamInBatches(any(), any());
 
         ProcessingReport report = engine.execute(allTransactions.stream());
 
@@ -177,10 +181,11 @@ class StreamPipelineEngineTest {
             ))
         ));
 
-        when(batchProcessor.groupIntoBatches(any()))
-            .thenReturn(batches);
-        when(batchProcessor.executeBatches(any()))
-            .thenReturn(results);
+        doAnswer(invocation -> {
+            java.util.function.Consumer<BatchProcessingResult> consumer = invocation.getArgument(1);
+            results.forEach(consumer);
+            return null;
+        }).when(batchProcessor).processStreamInBatches(any(), any());
 
         ProcessingReport report = engine.execute(transactions.stream());
 
@@ -210,10 +215,11 @@ class StreamPipelineEngineTest {
         results.add(BatchProcessingResult.partialFailure("batch-2", 2, 0, 1, 30L, new ArrayList<>()));
         results.add(BatchProcessingResult.success("batch-3", 4, 40L));
 
-        when(batchProcessor.groupIntoBatches(any()))
-            .thenReturn(batches);
-        when(batchProcessor.executeBatches(any()))
-            .thenReturn(results);
+        doAnswer(invocation -> {
+            java.util.function.Consumer<BatchProcessingResult> consumer = invocation.getArgument(1);
+            results.forEach(consumer);
+            return null;
+        }).when(batchProcessor).processStreamInBatches(any(), any());
 
         ProcessingReport report = engine.execute(allTransactions.stream());
 

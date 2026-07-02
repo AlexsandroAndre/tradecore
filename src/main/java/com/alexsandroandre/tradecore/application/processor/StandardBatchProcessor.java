@@ -7,6 +7,8 @@ import com.alexsandroandre.tradecore.domain.model.Transaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public final class StandardBatchProcessor implements BatchProcessor {
 
@@ -211,5 +213,27 @@ public final class StandardBatchProcessor implements BatchProcessor {
             new ArrayList<>(transactions),
             batchSize
         );
+    }
+
+    @Override
+    public void processStreamInBatches(Stream<Transaction> transactionStream, Consumer<BatchProcessingResult> resultConsumer) {
+        List<Transaction> currentBatch = new ArrayList<>(batchSize);
+
+        transactionStream.forEach(transaction -> {
+            currentBatch.add(transaction);
+
+            if (currentBatch.size() >= batchSize) {
+                Batch batch = createBatch(currentBatch);
+                BatchProcessingResult result = executeBatch(batch);
+                resultConsumer.accept(result);
+                currentBatch.clear();
+            }
+        });
+
+        if (!currentBatch.isEmpty()) {
+            Batch finalBatch = createBatch(currentBatch);
+            BatchProcessingResult result = executeBatch(finalBatch);
+            resultConsumer.accept(result);
+        }
     }
 }
