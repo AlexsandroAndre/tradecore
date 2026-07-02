@@ -1,101 +1,72 @@
 package com.alexsandroandre.tradecore.application.processor;
 
 import com.alexsandroandre.tradecore.application.dto.ProcessingReport;
-import com.alexsandroandre.tradecore.application.port.TransactionPersistencePort;
+import com.alexsandroandre.tradecore.domain.model.Batch;
+import com.alexsandroandre.tradecore.domain.model.BatchProcessingResult;
 import com.alexsandroandre.tradecore.domain.model.Transaction;
+import java.util.List;
 import java.util.stream.Stream;
 
 public final class StreamPipelineEngine {
 
-    private final TransactionProcessor processor;
-    private final TransactionPersistencePort persistencePort;
+    public static final String DUPLICATED_TRANSACTION_IN_BATCH = "DUPLICATED_TRANSACTION_IN_BATCH";
+    private final BatchProcessor batchProcessor;
 
-    public StreamPipelineEngine(
-        TransactionProcessor processor,
-        TransactionPersistencePort persistencePort
-    ) {
-        this.processor = processor;
-        this.persistencePort = persistencePort;
+    public StreamPipelineEngine(BatchProcessor batchProcessor) {
+        this.batchProcessor = batchProcessor;
     }
 
     public ProcessingReport execute(Stream<Transaction> transactionStream) {
         long startTime = System.currentTimeMillis();
-        ProcessingReportBuilder reportBuilder = new ProcessingReportBuilder();
 
-        transactionStream.forEach(transaction -> {
-            reportBuilder.incrementTotal();
-            processAndPersistRecord(transaction, reportBuilder);
-        });
+        List<Transaction> allTransactions = transactionStream.toList();
+
+        List<Batch> batches = batchProcessor.groupIntoBatches(allTransactions);
+
+        List<BatchProcessingResult> batchResults = batchProcessor.executeBatches(batches);
 
         long executionTime = System.currentTimeMillis() - startTime;
-        return reportBuilder.executionTimeMillis(executionTime).build();
+
+        return aggregateResults(allTransactions.size(), batchResults, executionTime);
     }
 
-    private void processAndPersistRecord(
-        Transaction transaction,
-        ProcessingReportBuilder reportBuilder
+    private ProcessingReport aggregateResults(
+        int totalRecords,
+        List<BatchProcessingResult> batchResults,
+        long executionTime
     ) {
-        try {
-            TransactionProcessor.ProcessingResult result = processor.process(transaction);
+        long successfulRecords = 0;
+        long rejectedRecords = 0;
+        long failedRecords = 0;
 
-            if (result.success()) {
-                persistRecord(result.transaction(), reportBuilder);
-            } else {
-                reportBuilder.incrementRejected();
+        for (BatchProcessingResult result : batchResults) {
+            if (result.status() == BatchProcessingResult.BatchStatus.SUCCESS) {
+                successfulRecords += result.processedCount();
+            } else if (result.status() == BatchProcessingResult.BatchStatus.PARTIAL_FAILURE) {
+                successfulRecords += result.processedCount();
+                if (result.hasErrors() && DUPLICATED_TRANSACTION_IN_BATCH.equals(
+                    result.getErrors().getFirst().errorCode())) {
+                    rejectedRecords += result.rejectedCount();
+                } else {
+                    rejectedRecords += result.rejectedCount();
+                    failedRecords += result.failedCount();
+                }
+            } else if (result.status() == BatchProcessingResult.BatchStatus.FAILURE) {
+                if (result.hasErrors() && DUPLICATED_TRANSACTION_IN_BATCH.equals(
+                    result.getErrors().getFirst().errorCode())) {
+                    rejectedRecords += result.totalProcessed();
+                } else {
+                    failedRecords += result.totalProcessed();
+                }
             }
-        } catch (Exception exception) {
-            reportBuilder.incrementFailed();
-        }
-    }
-
-    private void persistRecord(
-        Transaction transaction,
-        ProcessingReportBuilder reportBuilder
-    ) {
-        try {
-            persistencePort.save(transaction);
-            reportBuilder.incrementSuccessful();
-        } catch (Exception exception) {
-            reportBuilder.incrementFailed();
-        }
-    }
-
-    private static final class ProcessingReportBuilder {
-        private long totalRecords;
-        private long successfulRecords;
-        private long rejectedRecords;
-        private long failedRecords;
-        private long executionTimeMillis;
-
-        void incrementTotal() {
-            this.totalRecords++;
         }
 
-        void incrementSuccessful() {
-            this.successfulRecords++;
-        }
-
-        void incrementRejected() {
-            this.rejectedRecords++;
-        }
-
-        void incrementFailed() {
-            this.failedRecords++;
-        }
-
-        ProcessingReportBuilder executionTimeMillis(long executionTimeMillis) {
-            this.executionTimeMillis = executionTimeMillis;
-            return this;
-        }
-
-        ProcessingReport build() {
-            return new ProcessingReport(
-                totalRecords,
-                successfulRecords,
-                rejectedRecords,
-                failedRecords,
-                executionTimeMillis
-            );
-        }
+        return new ProcessingReport(
+            totalRecords,
+            successfulRecords,
+            rejectedRecords,
+            failedRecords,
+            executionTime
+        );
     }
 }

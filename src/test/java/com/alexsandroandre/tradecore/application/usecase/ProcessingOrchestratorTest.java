@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.alexsandroandre.tradecore.application.dto.ProcessingReport;
-import com.alexsandroandre.tradecore.application.port.TransactionPersistencePort;
+import com.alexsandroandre.tradecore.application.port.TransactionBatchPersistencePort;
 import com.alexsandroandre.tradecore.domain.model.Transaction;
 import com.alexsandroandre.tradecore.domain.validation.DomainValidationService;
 import java.math.BigDecimal;
@@ -24,13 +24,13 @@ class ProcessingOrchestratorTest {
     private ProcessingOrchestrator orchestrator;
 
     @Mock
-    private TransactionPersistencePort persistencePort;
+    private TransactionBatchPersistencePort batchPersistencePort;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         DomainValidationService validationService = new DomainValidationService();
-        orchestrator = new ProcessingOrchestrator(validationService, persistencePort);
+        orchestrator = new ProcessingOrchestrator(validationService, batchPersistencePort);
     }
 
     @Test
@@ -44,7 +44,7 @@ class ProcessingOrchestratorTest {
         assertEquals(5, report.successfulRecords());
         assertEquals(0, report.rejectedRecords());
         assertEquals(0, report.failedRecords());
-        verify(persistencePort, times(5)).save(any());
+        verify(batchPersistencePort, times(1)).saveBatch(any());
     }
 
     @Test
@@ -63,18 +63,13 @@ class ProcessingOrchestratorTest {
     }
 
     @Test
-    @DisplayName("should continue orchestration after persistence failures")
+    @DisplayName("should continue orchestration after batch persistence failures")
     void testOrchestrateWithPersistenceFailures() {
         List<Transaction> transactions = createValidTransactionList(3);
-        Transaction txn1 = transactions.get(0);
-        Transaction txn2 = transactions.get(1);
-        Transaction txn3 = transactions.get(2);
 
-        doNothing().when(persistencePort).save(txn1);
         doThrow(new RuntimeException("Database error"))
-            .when(persistencePort)
-            .save(txn2);
-        doNothing().when(persistencePort).save(txn3);
+            .when(batchPersistencePort)
+            .saveBatch(any());
 
         ProcessingReport report = orchestrator.orchestrate(transactions.stream());
 
@@ -92,7 +87,7 @@ class ProcessingOrchestratorTest {
         assertEquals(0, report.successfulRecords());
         assertEquals(0, report.rejectedRecords());
         assertEquals(0, report.failedRecords());
-        verify(persistencePort, never()).save(any());
+        verify(batchPersistencePort, never()).saveBatch(any());
     }
 
     @Test
@@ -104,7 +99,7 @@ class ProcessingOrchestratorTest {
 
         assertEquals(10, report.totalRecords());
         assertEquals(10, report.successfulRecords());
-        verify(persistencePort, times(10)).save(any());
+        verify(batchPersistencePort, times(1)).saveBatch(any());
     }
 
     @Test

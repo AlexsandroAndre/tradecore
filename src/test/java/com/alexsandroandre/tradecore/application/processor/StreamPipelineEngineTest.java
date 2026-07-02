@@ -4,7 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.alexsandroandre.tradecore.application.dto.ProcessingReport;
-import com.alexsandroandre.tradecore.application.port.TransactionPersistencePort;
+import com.alexsandroandre.tradecore.domain.model.Batch;
+import com.alexsandroandre.tradecore.domain.model.BatchProcessingResult;
 import com.alexsandroandre.tradecore.domain.model.Transaction;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -23,21 +24,22 @@ class StreamPipelineEngineTest {
     private StreamPipelineEngine engine;
 
     @Mock
-    private TransactionProcessor processor;
-
-    @Mock
-    private TransactionPersistencePort persistencePort;
+    private BatchProcessor batchProcessor;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        engine = new StreamPipelineEngine(processor, persistencePort);
+        engine = new StreamPipelineEngine(batchProcessor);
     }
 
     @Test
     @DisplayName("should process empty stream and return empty report")
     void testProcessEmptyStream() {
         Stream<Transaction> emptyStream = Stream.empty();
+        when(batchProcessor.groupIntoBatches(anyList()))
+            .thenReturn(new ArrayList<>());
+        when(batchProcessor.executeBatches(anyList()))
+            .thenReturn(new ArrayList<>());
 
         ProcessingReport report = engine.execute(emptyStream);
 
@@ -48,122 +50,106 @@ class StreamPipelineEngineTest {
     }
 
     @Test
-    @DisplayName("should process successful transactions")
+    @DisplayName("should process successful transactions through batches")
     void testProcessSuccessfulTransactions() {
         List<Transaction> transactions = createTransactionList(5);
-        for (Transaction transaction : transactions) {
-            when(processor.process(transaction))
-                .thenReturn(TransactionProcessor.ProcessingResult.success(
-                    transaction.withStatus(Transaction.TransactionStatus.COMPLETED)
-                ));
-        }
+        List<Batch> batches = new ArrayList<>();
+        batches.add(new Batch("batch-1", transactions, 1000));
+
+        List<BatchProcessingResult> results = new ArrayList<>();
+        results.add(BatchProcessingResult.success("batch-1", 5, 100L));
+
+        when(batchProcessor.groupIntoBatches(any()))
+            .thenReturn(batches);
+        when(batchProcessor.executeBatches(any()))
+            .thenReturn(results);
 
         ProcessingReport report = engine.execute(transactions.stream());
 
         assertEquals(5, report.totalRecords());
         assertEquals(5, report.successfulRecords());
-        assertEquals(0, report.rejectedRecords());
-        assertEquals(0, report.failedRecords());
-        verify(persistencePort, times(5)).save(any());
-    }
-
-    @Test
-    @DisplayName("should handle rejected records without stopping processing")
-    void testHandleRejectedRecords() {
-        List<Transaction> transactions = createTransactionList(3);
-        Transaction txn1 = transactions.get(0);
-        Transaction txn2 = transactions.get(1);
-        Transaction txn3 = transactions.get(2);
-
-        when(processor.process(txn1))
-            .thenReturn(TransactionProcessor.ProcessingResult.success(
-                txn1.withStatus(Transaction.TransactionStatus.COMPLETED)
-            ));
-        when(processor.process(txn2))
-            .thenReturn(TransactionProcessor.ProcessingResult.failure(
-                txn2.withStatus(Transaction.TransactionStatus.FAILED),
-                "INVALID_AMOUNT",
-                "Amount must be positive"
-            ));
-        when(processor.process(txn3))
-            .thenReturn(TransactionProcessor.ProcessingResult.success(
-                txn3.withStatus(Transaction.TransactionStatus.COMPLETED)
-            ));
-
-        ProcessingReport report = engine.execute(transactions.stream());
-
-        assertEquals(3, report.totalRecords());
-        assertEquals(2, report.successfulRecords());
-        assertEquals(1, report.rejectedRecords());
         assertEquals(0, report.failedRecords());
     }
 
     @Test
-    @DisplayName("should isolate persistence failures per record")
-    void testIsolatePersistenceFailures() {
-        List<Transaction> transactions = createTransactionList(3);
-        Transaction txn1 = transactions.get(0);
-        Transaction txn2 = transactions.get(1);
-        Transaction txn3 = transactions.get(2);
+    @DisplayName("should aggregate partial failure results")
+    void testAggregatePartialFailureResults() {
+        List<Transaction> transactions = createTransactionList(10);
+        List<Batch> batches = new ArrayList<>();
+        batches.add(new Batch("batch-1", transactions, 1000));
 
-        Transaction completedTxn = txn1.withStatus(Transaction.TransactionStatus.COMPLETED);
-        when(processor.process(any()))
-            .thenReturn(TransactionProcessor.ProcessingResult.success(completedTxn));
+        List<BatchProcessingResult> results = new ArrayList<>();
+        results.add(BatchProcessingResult.partialFailure(
+            "batch-1",
+            7,
+            0,
+            3,
+            100L,
+            new ArrayList<>()
+        ));
 
-        doNothing()
-            .when(persistencePort)
-            .save(txn1);
-        doThrow(new RuntimeException("Database connection failed"))
-            .when(persistencePort)
-            .save(txn2);
-        doNothing()
-            .when(persistencePort)
-            .save(txn3);
+        when(batchProcessor.groupIntoBatches(any()))
+            .thenReturn(batches);
+        when(batchProcessor.executeBatches(any()))
+            .thenReturn(results);
 
         ProcessingReport report = engine.execute(transactions.stream());
 
-        assertEquals(3, report.totalRecords());
-        assertEquals(3, report.successfulRecords());
-        assertEquals(0, report.rejectedRecords());
-        assertEquals(0, report.failedRecords());
-        verify(persistencePort, times(3)).save(any());
+        assertEquals(10, report.totalRecords());
+        assertEquals(7, report.successfulRecords());
+        assertEquals(3, report.failedRecords());
     }
 
     @Test
-    @DisplayName("should continue processing after processor exceptions")
-    void testContinueAfterProcessorException() {
-        List<Transaction> transactions = createTransactionList(3);
-        Transaction txn1 = transactions.get(0);
-        Transaction txn2 = transactions.get(1);
-        Transaction txn3 = transactions.get(2);
+    @DisplayName("should handle multiple batches with mixed results")
+    void testHandleMultipleBatchesMixedResults() {
+        List<Transaction> batch1Txns = createTransactionList(5);
+        List<Transaction> batch2Txns = createTransactionList(5);
+        List<Transaction> allTransactions = new ArrayList<>();
+        allTransactions.addAll(batch1Txns);
+        allTransactions.addAll(batch2Txns);
 
-        when(processor.process(txn1))
-            .thenReturn(TransactionProcessor.ProcessingResult.success(
-                txn1.withStatus(Transaction.TransactionStatus.COMPLETED)
-            ));
-        when(processor.process(txn2))
-            .thenThrow(new RuntimeException("Processing error"));
-        when(processor.process(txn3))
-            .thenReturn(TransactionProcessor.ProcessingResult.success(
-                txn3.withStatus(Transaction.TransactionStatus.COMPLETED)
-            ));
+        List<Batch> batches = new ArrayList<>();
+        batches.add(new Batch("batch-1", batch1Txns, 1000));
+        batches.add(new Batch("batch-2", batch2Txns, 1000));
 
-        ProcessingReport report = engine.execute(transactions.stream());
+        List<BatchProcessingResult> results = new ArrayList<>();
+        results.add(BatchProcessingResult.success("batch-1", 5, 50L));
+        results.add(BatchProcessingResult.partialFailure(
+            "batch-2",
+            3,
+            0,
+            2,
+            50L,
+            new ArrayList<>()
+        ));
 
-        assertEquals(3, report.totalRecords());
-        assertEquals(2, report.successfulRecords());
-        assertEquals(0, report.rejectedRecords());
-        assertEquals(1, report.failedRecords());
+        when(batchProcessor.groupIntoBatches(any()))
+            .thenReturn(batches);
+        when(batchProcessor.executeBatches(any()))
+            .thenReturn(results);
+
+        ProcessingReport report = engine.execute(allTransactions.stream());
+
+        assertEquals(10, report.totalRecords());
+        assertEquals(8, report.successfulRecords());
+        assertEquals(2, report.failedRecords());
     }
 
     @Test
     @DisplayName("should record execution time")
     void testRecordExecutionTime() {
         List<Transaction> transactions = createTransactionList(1);
-        Transaction txn = transactions.get(0);
-        Transaction completedTxn = txn.withStatus(Transaction.TransactionStatus.COMPLETED);
-        when(processor.process(any()))
-            .thenReturn(TransactionProcessor.ProcessingResult.success(completedTxn));
+        List<Batch> batches = new ArrayList<>();
+        batches.add(new Batch("batch-1", transactions, 1000));
+
+        List<BatchProcessingResult> results = new ArrayList<>();
+        results.add(BatchProcessingResult.success("batch-1", 1, 10L));
+
+        when(batchProcessor.groupIntoBatches(any()))
+            .thenReturn(batches);
+        when(batchProcessor.executeBatches(any()))
+            .thenReturn(results);
 
         ProcessingReport report = engine.execute(transactions.stream());
 
@@ -171,36 +157,69 @@ class StreamPipelineEngineTest {
     }
 
     @Test
-    @DisplayName("should aggregate metrics correctly for mixed scenario")
-    void testAggregateMetricsForMixedScenario() {
-        List<Transaction> transactions = createTransactionList(10);
+    @DisplayName("should handle duplicate detection failures")
+    void testHandleDuplicateDetectionFailures() {
+        List<Transaction> transactions = createTransactionList(5);
+        List<Batch> batches = new ArrayList<>();
+        batches.add(new Batch("batch-1", transactions, 1000));
 
-        for (int i = 0; i < transactions.size(); i++) {
-            Transaction txn = transactions.get(i);
-            if (i < 5) {
-                when(processor.process(txn))
-                    .thenReturn(TransactionProcessor.ProcessingResult.success(
-                        txn.withStatus(Transaction.TransactionStatus.COMPLETED)
-                    ));
-            } else if (i < 8) {
-                when(processor.process(txn))
-                    .thenReturn(TransactionProcessor.ProcessingResult.failure(
-                        txn.withStatus(Transaction.TransactionStatus.FAILED),
-                        "INVALID_DATA",
-                        "Invalid data"
-                    ));
-            } else {
-                when(processor.process(txn))
-                    .thenThrow(new RuntimeException("Processing error"));
-            }
-        }
+        List<BatchProcessingResult> results = new ArrayList<>();
+        results.add(BatchProcessingResult.partialFailure(
+            "batch-1",
+            0,
+            5,
+            0,
+            50L,
+            List.of(new BatchProcessingResult.BatchProcessingError(
+                "batch-1",
+                "DUPLICATED_TRANSACTION_IN_BATCH",
+                "Duplicate detected"
+            ))
+        ));
+
+        when(batchProcessor.groupIntoBatches(any()))
+            .thenReturn(batches);
+        when(batchProcessor.executeBatches(any()))
+            .thenReturn(results);
 
         ProcessingReport report = engine.execute(transactions.stream());
 
+        assertEquals(5, report.totalRecords());
+        assertEquals(0, report.successfulRecords());
+        assertEquals(5, report.rejectedRecords());
+    }
+
+    @Test
+    @DisplayName("should aggregate metrics correctly for complex scenario")
+    void testAggregateMetricsComplexScenario() {
+        List<Transaction> batch1Txns = createTransactionList(3);
+        List<Transaction> batch2Txns = createTransactionList(3);
+        List<Transaction> batch3Txns = createTransactionList(4);
+        List<Transaction> allTransactions = new ArrayList<>();
+        allTransactions.addAll(batch1Txns);
+        allTransactions.addAll(batch2Txns);
+        allTransactions.addAll(batch3Txns);
+
+        List<Batch> batches = new ArrayList<>();
+        batches.add(new Batch("batch-1", batch1Txns, 1000));
+        batches.add(new Batch("batch-2", batch2Txns, 1000));
+        batches.add(new Batch("batch-3", batch3Txns, 1000));
+
+        List<BatchProcessingResult> results = new ArrayList<>();
+        results.add(BatchProcessingResult.success("batch-1", 3, 30L));
+        results.add(BatchProcessingResult.partialFailure("batch-2", 2, 0, 1, 30L, new ArrayList<>()));
+        results.add(BatchProcessingResult.success("batch-3", 4, 40L));
+
+        when(batchProcessor.groupIntoBatches(any()))
+            .thenReturn(batches);
+        when(batchProcessor.executeBatches(any()))
+            .thenReturn(results);
+
+        ProcessingReport report = engine.execute(allTransactions.stream());
+
         assertEquals(10, report.totalRecords());
-        assertEquals(5, report.successfulRecords());
-        assertEquals(3, report.rejectedRecords());
-        assertEquals(2, report.failedRecords());
+        assertEquals(9, report.successfulRecords());
+        assertEquals(1, report.failedRecords());
     }
 
     private List<Transaction> createTransactionList(int count) {
