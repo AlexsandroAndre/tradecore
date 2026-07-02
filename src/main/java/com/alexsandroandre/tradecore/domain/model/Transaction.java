@@ -34,4 +34,16 @@ public record Transaction(
             newStatus
         );
     }
+
+    public Transaction asProcessing() {
+        return withStatus(TransactionStatus.PROCESSING);
+    }
+
+    public Transaction asCompleted() {
+        return withStatus(TransactionStatus.COMPLETED);
+    }
+
+    public Transaction asFailed() {
+        return withStatus(TransactionStatus.FAILED);
+    }
 }
