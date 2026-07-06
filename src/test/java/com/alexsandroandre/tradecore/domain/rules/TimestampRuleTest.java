@@ -5,123 +5,95 @@ import com.alexsandroandre.tradecore.domain.validation.DomainValidationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 class TimestampRuleTest {
 
     private TimestampRule rule;
+    private TransactionTestBuilder transactionBuilder;
 
     @BeforeEach
     void setUp() {
         rule = new TimestampRule();
+        transactionBuilder = new TransactionTestBuilder();
     }
 
     @Test
     void shouldAcceptValidPastTimestamp() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().minusHours(1),
-            "external-bank",
-            Transaction.TransactionStatus.PENDING
-        );
+        Transaction transaction = transactionBuilder.build();
 
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isSuccess());
-    }
-
-    @Test
-    void shouldAcceptValidPastTimestampDaysAgo() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().minusDays(30),
-            "external-bank",
-            Transaction.TransactionStatus.PENDING
-        );
-
-        DomainValidationResult result = rule.validate(transaction);
-
-        assertTrue(result.isSuccess());
-    }
-
-    @Test
-    void shouldAcceptValidCurrentTimestamp() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now(),
-            "external-bank",
-            Transaction.TransactionStatus.PENDING
-        );
-
-        DomainValidationResult result = rule.validate(transaction);
-
-        assertTrue(result.isSuccess());
+        assertEquals(DomainValidationResult.ValidationStatus.SUCCESS, result.status());
     }
 
     @Test
     void shouldRejectNullTimestamp() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            null,
-            "external-bank",
-            Transaction.TransactionStatus.PENDING
-        );
+        Transaction transaction = transactionBuilder.buildWithNullTimestamp();
 
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_TIMESTAMP", result.validationCode());
-        assertEquals("TIMESTAMP_RULE", result.rejectedRule());
+        assertEquals(DomainValidationResult.ValidationStatus.FAILURE, result.status());
+        assertEquals(VALIDATION_CODE_INVALID_TIMESTAMP, result.validationCode());
+        assertEquals(REJECTED_RULE_TIMESTAMP_RULE, result.rejectedRule());
+        assertNotNull(result.validationMessage());
     }
 
     @Test
     void shouldRejectFutureTimestamp() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().plusHours(1),
-            "external-bank",
-            Transaction.TransactionStatus.PENDING
-        );
+        Transaction transaction = transactionBuilder.buildWithFutureTimestamp();
 
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_TIMESTAMP", result.validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_TIMESTAMP, result.validationCode());
+        assertEquals(REJECTED_RULE_TIMESTAMP_RULE, result.rejectedRule());
     }
 
     @Test
-    void shouldRejectFutureTimestampInTheFar() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().plusDays(100),
-            "external-bank",
-            Transaction.TransactionStatus.PENDING
-        );
+    void shouldAcceptTimestampFromOneHourAgo() {
+        Transaction transaction = transactionBuilder
+            .withTimestamp(OffsetDateTime.now().minusHours(1))
+            .build();
 
         DomainValidationResult result = rule.validate(transaction);
 
-        assertTrue(result.isFailure());
-        assertEquals("INVALID_TIMESTAMP", result.validationCode());
+        assertTrue(result.isSuccess());
+    }
+
+    @Test
+    void shouldAcceptTimestampFromYesterday() {
+        Transaction transaction = transactionBuilder.buildWithPastTimestamp();
+
+        DomainValidationResult result = rule.validate(transaction);
+
+        assertTrue(result.isSuccess());
+    }
+
+    @Test
+    void shouldAcceptVeryOldTimestamp() {
+        Transaction transaction = transactionBuilder
+            .withTimestamp(OffsetDateTime.now().minusDays(365))
+            .build();
+
+        DomainValidationResult result = rule.validate(transaction);
+
+        assertTrue(result.isSuccess());
+    }
+
+    @Test
+    void shouldAcceptCurrentTimestamp() {
+        Transaction transaction = transactionBuilder
+            .withTimestamp(OffsetDateTime.now())
+            .build();
+
+        DomainValidationResult result = rule.validate(transaction);
+
+        assertTrue(result.isSuccess());
     }
 }
