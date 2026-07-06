@@ -122,7 +122,7 @@ class ProcessingOrchestratorTest {
         assertEquals(8, report.totalRecords());
         assertEquals(5, report.successfulRecords());
         assertEquals(3, report.rejectedRecords());
-        assertTrue(report.executionTimeMillis() >= 0);
+        assertTrue(report.duration() >= 0);
     }
 
     private List<Transaction> createValidTransactionList(int count) {

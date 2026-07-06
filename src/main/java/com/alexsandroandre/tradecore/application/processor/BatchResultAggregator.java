@@ -42,12 +42,18 @@ public final class BatchResultAggregator {
 
     public ProcessingReport build() {
         long executionTime = System.currentTimeMillis() - startTime;
-        return new ProcessingReport(
-            totalRecords,
-            successfulRecords,
-            rejectedRecords,
-            failedRecords,
-            executionTime
-        );
+        long endTime = startTime + executionTime;
+
+        return ProcessingReport.builder()
+            .executionId("exec-" + System.currentTimeMillis())
+            .startTime(startTime)
+            .endTime(endTime)
+            .totalRecords(totalRecords)
+            .successfulRecords(successfulRecords)
+            .rejectedRecords(rejectedRecords)
+            .failedRecords(failedRecords)
+            .persistedRecords(successfulRecords)
+            .throughput((totalRecords * 1000) / (executionTime > 0 ? executionTime : 1))
+            .build();
     }
 }
