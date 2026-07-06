@@ -1,6 +1,12 @@
 package com.alexsandroandre.tradecore.infrastructure.configuration;
 
+import com.alexsandroandre.tradecore.application.port.ProcessingMetricsPort;
+import com.alexsandroandre.tradecore.application.service.MetricsCollector;
+import com.alexsandroandre.tradecore.infrastructure.persistence.adapter.ProcessingMetricsRepositoryAdapter;
 import com.alexsandroandre.tradecore.infrastructure.persistence.batch.BatchInsertConfiguration;
+import com.alexsandroandre.tradecore.infrastructure.persistence.mapper.ProcessingMetricsMapper;
+import com.alexsandroandre.tradecore.infrastructure.persistence.mapper.ProcessingMetricsMapperImpl;
+import com.alexsandroandre.tradecore.infrastructure.persistence.repository.ProcessingMetricsRepository;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,5 +68,23 @@ public class PersistenceConfiguration {
     @ConfigurationProperties(prefix = "persistence.batch")
     public BatchProperties batchProperties() {
         return new BatchProperties();
+    }
+
+    @Bean
+    public ProcessingMetricsMapper processingMetricsMapper() {
+        return new ProcessingMetricsMapperImpl();
+    }
+
+    @Bean
+    public ProcessingMetricsPort processingMetricsPort(
+        ProcessingMetricsRepository repository,
+        ProcessingMetricsMapper mapper
+    ) {
+        return new ProcessingMetricsRepositoryAdapter(repository, mapper);
+    }
+
+    @Bean
+    public MetricsCollector metricsCollector(ProcessingMetricsPort port) {
+        return new MetricsCollector(port);
     }
 }
