@@ -1,11 +1,20 @@
 package com.alexsandroandre.tradecore.infrastructure.configuration;
 
 import com.alexsandroandre.tradecore.application.port.ProcessingMetricsPort;
+import com.alexsandroandre.tradecore.application.port.TransactionBatchPersistencePort;
 import com.alexsandroandre.tradecore.application.service.MetricsCollector;
+import com.alexsandroandre.tradecore.application.usecase.ProcessingOrchestrator;
+import com.alexsandroandre.tradecore.domain.validation.DomainValidationService;
 import com.alexsandroandre.tradecore.infrastructure.persistence.adapter.ProcessingMetricsRepositoryAdapter;
+import com.alexsandroandre.tradecore.infrastructure.persistence.adapter.TransactionBatchPersistenceAdapter;
 import com.alexsandroandre.tradecore.infrastructure.persistence.batch.BatchInsertConfiguration;
+import com.alexsandroandre.tradecore.infrastructure.persistence.batch.BatchInsertService;
+import com.alexsandroandre.tradecore.infrastructure.persistence.mapper.BatchMapper;
+import com.alexsandroandre.tradecore.infrastructure.persistence.mapper.BatchMapperImpl;
 import com.alexsandroandre.tradecore.infrastructure.persistence.mapper.ProcessingMetricsMapper;
 import com.alexsandroandre.tradecore.infrastructure.persistence.mapper.ProcessingMetricsMapperImpl;
+import com.alexsandroandre.tradecore.infrastructure.persistence.mapper.TransactionMapper;
+import com.alexsandroandre.tradecore.infrastructure.persistence.mapper.TransactionMapperImpl;
 import com.alexsandroandre.tradecore.infrastructure.persistence.repository.ProcessingMetricsRepository;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -86,5 +95,36 @@ public class PersistenceConfiguration {
     @Bean
     public MetricsCollector metricsCollector(ProcessingMetricsPort port) {
         return new MetricsCollector(port);
+    }
+
+    @Bean
+    public TransactionMapper transactionMapper() {
+        return new TransactionMapperImpl();
+    }
+
+    @Bean
+    public BatchMapper batchMapper(TransactionMapper transactionMapper) {
+        return new BatchMapperImpl(transactionMapper);
+    }
+
+    @Bean
+    public TransactionBatchPersistencePort transactionBatchPersistencePort(
+        BatchInsertService batchInsertService,
+        BatchMapper batchMapper
+    ) {
+        return new TransactionBatchPersistenceAdapter(batchInsertService, batchMapper);
+    }
+
+    @Bean
+    public DomainValidationService domainValidationService() {
+        return new DomainValidationService();
+    }
+
+    @Bean
+    public ProcessingOrchestrator processingOrchestrator(
+        DomainValidationService validationService,
+        TransactionBatchPersistencePort batchPersistencePort
+    ) {
+        return new ProcessingOrchestrator(validationService, batchPersistencePort);
     }
 }
