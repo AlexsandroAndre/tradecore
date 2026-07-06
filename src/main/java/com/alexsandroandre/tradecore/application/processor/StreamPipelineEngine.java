@@ -44,6 +44,7 @@ public final class StreamPipelineEngine {
         long successfulRecords = 0;
         long rejectedRecords = 0;
         long failedRecords = 0;
+        long startTime = System.currentTimeMillis() - executionTime;
 
         for (BatchProcessingResult result : batchResults) {
             if (result.status() == BatchProcessingResult.BatchStatus.SUCCESS) {
@@ -67,12 +68,18 @@ public final class StreamPipelineEngine {
             }
         }
 
-        return new ProcessingReport(
-            totalRecords,
-            successfulRecords,
-            rejectedRecords,
-            failedRecords,
-            executionTime
-        );
+        long endTime = startTime + executionTime;
+
+        return ProcessingReport.builder()
+            .executionId("exec-" + System.currentTimeMillis())
+            .startTime(startTime)
+            .endTime(endTime)
+            .totalRecords(totalRecords)
+            .successfulRecords(successfulRecords)
+            .rejectedRecords(rejectedRecords)
+            .failedRecords(failedRecords)
+            .persistedRecords(successfulRecords)
+            .throughput((totalRecords * 1000) / (executionTime > 0 ? executionTime : 1))
+            .build();
     }
 }
