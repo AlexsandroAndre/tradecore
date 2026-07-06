@@ -1,6 +1,7 @@
 package com.alexsandroandre.tradecore.application.processor;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 import com.alexsandroandre.tradecore.domain.model.Transaction;
 import com.alexsandroandre.tradecore.domain.validation.DomainValidationService;
@@ -26,12 +27,12 @@ class RecordProcessorTest {
     @DisplayName("should process valid transaction successfully")
     void testProcessValidTransaction() {
         Transaction validTransaction = new Transaction(
-            "TXN-001",
-            "ACC-001",
-            BigDecimal.valueOf(100.00),
-            "USD",
+            TRANSACTION_ID_TXN_001,
+            VALID_ACCOUNT_ID,
+            AMOUNT_100,
+            VALID_CURRENCY,
             OffsetDateTime.now(),
-            "SYSTEM-A",
+            SOURCE_SYSTEM_A,
             Transaction.TransactionStatus.PENDING
         );
 
@@ -47,12 +48,12 @@ class RecordProcessorTest {
     @DisplayName("should fail processing invalid amount transaction")
     void testProcessInvalidAmountTransaction() {
         Transaction invalidTransaction = new Transaction(
-            "TXN-002",
-            "ACC-002",
-            BigDecimal.valueOf(-100.00),
-            "USD",
+            TRANSACTION_ID_TXN_002,
+            ANOTHER_ACCOUNT_ID,
+            AMOUNT_NEGATIVE_100,
+            VALID_CURRENCY,
             OffsetDateTime.now(),
-            "SYSTEM-A",
+            SOURCE_SYSTEM_A,
             Transaction.TransactionStatus.PENDING
         );
 
@@ -68,12 +69,12 @@ class RecordProcessorTest {
     @DisplayName("should fail processing invalid currency transaction")
     void testProcessInvalidCurrencyTransaction() {
         Transaction invalidTransaction = new Transaction(
-            "TXN-003",
-            "ACC-003",
-            BigDecimal.valueOf(100.00),
-            "INVALID",
+            TRANSACTION_ID_TXN_003,
+            ANOTHER_ACCOUNT_ID_ACC_003,
+            AMOUNT_100,
+            CURRENCY_INVALID,
             OffsetDateTime.now(),
-            "SYSTEM-A",
+            SOURCE_SYSTEM_A,
             Transaction.TransactionStatus.PENDING
         );
 
@@ -87,12 +88,12 @@ class RecordProcessorTest {
     @DisplayName("should preserve transaction data in result")
     void testPreserveTransactionData() {
         Transaction transaction = new Transaction(
-            "TXN-004",
-            "ACC-004",
-            BigDecimal.valueOf(250.50),
-            "EUR",
+            TRANSACTION_ID_TXN_004,
+            ANOTHER_ACCOUNT_ID_ACC_004,
+            AMOUNT_250_50,
+            CURRENCY_EUR,
             OffsetDateTime.now(),
-            "SYSTEM-B",
+            SOURCE_SYSTEM_B,
             Transaction.TransactionStatus.PENDING
         );
 

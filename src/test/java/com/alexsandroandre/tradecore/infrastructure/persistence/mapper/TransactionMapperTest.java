@@ -15,6 +15,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 @DisplayName("TransactionMapper Tests")
 class TransactionMapperTest {
@@ -39,24 +40,24 @@ class TransactionMapperTest {
             );
 
             Transaction domain = new Transaction(
-                "TRX001",
-                "ACC123",
-                new BigDecimal("100.50"),
-                "USD",
+                TRANSACTION_ID_TRX001,
+                ACCOUNT_ID_ACC_123,
+                AMOUNT_100_50,
+                VALID_CURRENCY,
                 timestamp,
-                "EXTERNAL_API",
+                SOURCE_EXTERNAL_API,
                 Transaction.TransactionStatus.PENDING
             );
 
             TransactionEntity entity = mapper.toEntity(domain);
 
             assertNotNull(entity);
-            assertEquals("TRX001", entity.getTransactionId());
-            assertEquals("ACC123", entity.getAccountId());
-            assertEquals(new BigDecimal("100.50"), entity.getAmount());
-            assertEquals("USD", entity.getCurrency());
-            assertEquals("EXTERNAL_API", entity.getSource());
-            assertEquals("PENDING", entity.getProcessingStatus());
+            assertEquals(TRANSACTION_ID_TRX001, entity.getTransactionId());
+            assertEquals(ACCOUNT_ID_ACC_123, entity.getAccountId());
+            assertEquals(AMOUNT_100_50, entity.getAmount());
+            assertEquals(VALID_CURRENCY, entity.getCurrency());
+            assertEquals(SOURCE_EXTERNAL_API, entity.getSource());
+            assertEquals(PROCESSING_STATUS_PENDING, entity.getProcessingStatus());
             assertNotNull(entity.getTimestamp());
             assertNotNull(entity.getCreatedAt());
         }
@@ -70,12 +71,12 @@ class TransactionMapperTest {
             );
 
             Transaction domain = new Transaction(
-                "TRX-ABC-123",
-                "ACCOUNT-XYZ",
-                new BigDecimal("1000.99"),
-                "EUR",
+                TRANSACTION_ID_TRX_ABC_123,
+                ACCOUNT_ID_ACCOUNT_XYZ,
+                AMOUNT_1000_99,
+                CURRENCY_EUR,
                 timestamp,
-                "INTERNAL_SYSTEM",
+                SOURCE_INTERNAL_SYSTEM,
                 Transaction.TransactionStatus.PROCESSING
             );
 
@@ -93,10 +94,10 @@ class TransactionMapperTest {
         @DisplayName("should handle different transaction statuses")
         void shouldHandleDifferentStatuses() {
             Transaction[] transactions = new Transaction[]{
-                createTransaction("TRX001", Transaction.TransactionStatus.PENDING),
-                createTransaction("TRX002", Transaction.TransactionStatus.PROCESSING),
-                createTransaction("TRX003", Transaction.TransactionStatus.COMPLETED),
-                createTransaction("TRX004", Transaction.TransactionStatus.FAILED)
+                createTransaction(TRANSACTION_ID_TRX001, Transaction.TransactionStatus.PENDING),
+                createTransaction(TRANSACTION_ID_TRX002, Transaction.TransactionStatus.PROCESSING),
+                createTransaction(TRANSACTION_ID_TRX003, Transaction.TransactionStatus.COMPLETED),
+                createTransaction(TRANSACTION_ID_TRX004, Transaction.TransactionStatus.FAILED)
             };
 
             for (Transaction transaction : transactions) {
@@ -113,7 +114,7 @@ class TransactionMapperTest {
                 () -> mapper.toEntity(null)
             );
 
-            assertEquals("NULL_MAPPING", exception.getValidationCode());
+            assertEquals(EXCEPTION_CODE_NULL_MAPPING, exception.getValidationCode());
             assertTrue(exception.getMessage().contains("null"));
         }
 
@@ -121,12 +122,12 @@ class TransactionMapperTest {
         @DisplayName("should handle null status gracefully")
         void shouldHandleNullStatus() {
             Transaction domain = new Transaction(
-                "TRX001",
-                "ACC123",
-                new BigDecimal("100.50"),
-                "USD",
+                TRANSACTION_ID_TRX001,
+                ACCOUNT_ID_ACC_123,
+                AMOUNT_100_50,
+                VALID_CURRENCY,
                 OffsetDateTime.now(ZoneOffset.UTC),
-                "SOURCE",
+                SOURCE_GENERIC,
                 null
             );
 
@@ -147,24 +148,24 @@ class TransactionMapperTest {
             Instant createdAt = Instant.now();
 
             TransactionEntity entity = new TransactionEntity(
-                "TRX001",
-                "ACC123",
-                new BigDecimal("100.50"),
-                "USD",
-                "EXTERNAL_API",
+                TRANSACTION_ID_TRX001,
+                ACCOUNT_ID_ACC_123,
+                AMOUNT_100_50,
+                VALID_CURRENCY,
+                SOURCE_EXTERNAL_API,
                 timestamp,
-                "PENDING",
+                PROCESSING_STATUS_PENDING,
                 createdAt
             );
 
             Transaction domain = mapper.toDomain(entity);
 
             assertNotNull(domain);
-            assertEquals("TRX001", domain.transactionId());
-            assertEquals("ACC123", domain.accountId());
-            assertEquals(new BigDecimal("100.50"), domain.amount());
-            assertEquals("USD", domain.currency());
-            assertEquals("EXTERNAL_API", domain.source());
+            assertEquals(TRANSACTION_ID_TRX001, domain.transactionId());
+            assertEquals(ACCOUNT_ID_ACC_123, domain.accountId());
+            assertEquals(AMOUNT_100_50, domain.amount());
+            assertEquals(VALID_CURRENCY, domain.currency());
+            assertEquals(SOURCE_EXTERNAL_API, domain.source());
             assertEquals(Transaction.TransactionStatus.PENDING, domain.status());
             assertNotNull(domain.timestamp());
         }
@@ -175,13 +176,13 @@ class TransactionMapperTest {
             Instant timestamp = Instant.parse("2024-03-20T15:45:30.500Z");
 
             TransactionEntity entity = new TransactionEntity(
-                "TRX-XYZ-789",
-                "ACCOUNT-ABC",
-                new BigDecimal("5000.75"),
-                "GBP",
-                "SYSTEM_A",
+                TRANSACTION_ID_TRX_XYZ_789,
+                ACCOUNT_ID_ACCOUNT_ABC,
+                AMOUNT_5000_75,
+                CURRENCY_GBP,
+                SOURCE_SYSTEM_A_MAPPER,
                 timestamp,
-                "COMPLETED",
+                PROCESSING_STATUS_COMPLETED,
                 Instant.now()
             );
 
@@ -197,10 +198,10 @@ class TransactionMapperTest {
         @Test
         @DisplayName("should handle different transaction statuses from entity")
         void shouldHandleDifferentStatuses() {
-            String[] statuses = {"PENDING", "PROCESSING", "COMPLETED", "FAILED"};
+            String[] statuses = {PROCESSING_STATUS_PENDING, PROCESSING_STATUS_PROCESSING, PROCESSING_STATUS_COMPLETED, PROCESSING_STATUS_FAILED};
 
             for (String status : statuses) {
-                TransactionEntity entity = createEntity("TRX001", status);
+                TransactionEntity entity = createEntity(TRANSACTION_ID_TRX001, status);
                 Transaction domain = mapper.toDomain(entity);
                 assertEquals(status, domain.status().name());
             }
@@ -214,20 +215,20 @@ class TransactionMapperTest {
                 () -> mapper.toDomain(null)
             );
 
-            assertEquals("NULL_MAPPING", exception.getValidationCode());
+            assertEquals(EXCEPTION_CODE_NULL_MAPPING, exception.getValidationCode());
         }
 
         @Test
         @DisplayName("should throw exception for invalid status")
         void shouldThrowExceptionForInvalidStatus() {
             TransactionEntity entity = new TransactionEntity(
-                "TRX001",
-                "ACC123",
-                new BigDecimal("100.50"),
-                "USD",
-                "SOURCE",
+                TRANSACTION_ID_TRX001,
+                ACCOUNT_ID_ACC_123,
+                AMOUNT_100_50,
+                VALID_CURRENCY,
+                SOURCE_GENERIC,
                 Instant.now(),
-                "INVALID_STATUS",
+                PROCESSING_STATUS_INVALID,
                 Instant.now()
             );
 
@@ -236,7 +237,7 @@ class TransactionMapperTest {
                 () -> mapper.toDomain(entity)
             );
 
-            assertEquals("INVALID_ENTITY_MAPPING", exception.getValidationCode());
+            assertEquals(EXCEPTION_CODE_INVALID_ENTITY_MAPPING, exception.getValidationCode());
         }
     }
 
@@ -248,33 +249,33 @@ class TransactionMapperTest {
         @DisplayName("should map list of domain transactions to entities")
         void shouldMapListOfDomains() {
             List<Transaction> domains = List.of(
-                createTransaction("TRX001", Transaction.TransactionStatus.PENDING),
-                createTransaction("TRX002", Transaction.TransactionStatus.PROCESSING),
-                createTransaction("TRX003", Transaction.TransactionStatus.COMPLETED)
+                createTransaction(TRANSACTION_ID_TRX001, Transaction.TransactionStatus.PENDING),
+                createTransaction(TRANSACTION_ID_TRX002, Transaction.TransactionStatus.PROCESSING),
+                createTransaction(TRANSACTION_ID_TRX003, Transaction.TransactionStatus.COMPLETED)
             );
 
             List<TransactionEntity> entities = mapper.toEntityList(domains);
 
-            assertEquals(3, entities.size());
-            assertEquals("TRX001", entities.get(0).getTransactionId());
-            assertEquals("TRX002", entities.get(1).getTransactionId());
-            assertEquals("TRX003", entities.get(2).getTransactionId());
+            assertEquals(LIST_SIZE_3, entities.size());
+            assertEquals(TRANSACTION_ID_TRX001, entities.get(0).getTransactionId());
+            assertEquals(TRANSACTION_ID_TRX002, entities.get(1).getTransactionId());
+            assertEquals(TRANSACTION_ID_TRX003, entities.get(2).getTransactionId());
         }
 
         @Test
         @DisplayName("should preserve order during list mapping")
         void shouldPreserveOrder() {
             List<Transaction> domains = List.of(
-                createTransaction("TRX-Z", Transaction.TransactionStatus.PENDING),
-                createTransaction("TRX-A", Transaction.TransactionStatus.PENDING),
-                createTransaction("TRX-M", Transaction.TransactionStatus.PENDING)
+                createTransaction(TRANSACTION_ID_TRX_Z, Transaction.TransactionStatus.PENDING),
+                createTransaction(TRANSACTION_ID_TRX_A, Transaction.TransactionStatus.PENDING),
+                createTransaction(TRANSACTION_ID_TRX_M, Transaction.TransactionStatus.PENDING)
             );
 
             List<TransactionEntity> entities = mapper.toEntityList(domains);
 
-            assertEquals("TRX-Z", entities.get(0).getTransactionId());
-            assertEquals("TRX-A", entities.get(1).getTransactionId());
-            assertEquals("TRX-M", entities.get(2).getTransactionId());
+            assertEquals(TRANSACTION_ID_TRX_Z, entities.get(0).getTransactionId());
+            assertEquals(TRANSACTION_ID_TRX_A, entities.get(1).getTransactionId());
+            assertEquals(TRANSACTION_ID_TRX_M, entities.get(2).getTransactionId());
         }
 
         @Test
@@ -294,14 +295,14 @@ class TransactionMapperTest {
                 () -> mapper.toEntityList(null)
             );
 
-            assertEquals("NULL_MAPPING", exception.getValidationCode());
+            assertEquals(EXCEPTION_CODE_NULL_MAPPING, exception.getValidationCode());
         }
 
         @Test
         @DisplayName("should handle large collections efficiently")
         void shouldHandleLargeCollections() {
             List<Transaction> domains = new java.util.ArrayList<>();
-            for (int i = 0; i < 10000; i++) {
+            for (int i = 0; i < LIST_SIZE_10000; i++) {
                 domains.add(createTransaction("TRX-" + i, Transaction.TransactionStatus.PENDING));
             }
 
@@ -309,8 +310,8 @@ class TransactionMapperTest {
             List<TransactionEntity> entities = mapper.toEntityList(domains);
             long duration = System.currentTimeMillis() - startTime;
 
-            assertEquals(10000, entities.size());
-            assertTrue(duration < 5000, "Mapping 10000 transactions took too long: " + duration + "ms");
+            assertEquals(LIST_SIZE_10000, entities.size());
+            assertTrue(duration < PERFORMANCE_TIME_THRESHOLD, "Mapping 10000 transactions took too long: " + duration + "ms");
         }
     }
 
@@ -322,33 +323,33 @@ class TransactionMapperTest {
         @DisplayName("should map list of entities to domain transactions")
         void shouldMapListOfEntities() {
             List<TransactionEntity> entities = List.of(
-                createEntity("TRX001", "PENDING"),
-                createEntity("TRX002", "PROCESSING"),
-                createEntity("TRX003", "COMPLETED")
+                createEntity(TRANSACTION_ID_TRX001, PROCESSING_STATUS_PENDING),
+                createEntity(TRANSACTION_ID_TRX002, PROCESSING_STATUS_PROCESSING),
+                createEntity(TRANSACTION_ID_TRX003, PROCESSING_STATUS_COMPLETED)
             );
 
             List<Transaction> domains = mapper.toDomainList(entities);
 
-            assertEquals(3, domains.size());
-            assertEquals("TRX001", domains.get(0).transactionId());
-            assertEquals("TRX002", domains.get(1).transactionId());
-            assertEquals("TRX003", domains.get(2).transactionId());
+            assertEquals(LIST_SIZE_3, domains.size());
+            assertEquals(TRANSACTION_ID_TRX001, domains.get(0).transactionId());
+            assertEquals(TRANSACTION_ID_TRX002, domains.get(1).transactionId());
+            assertEquals(TRANSACTION_ID_TRX003, domains.get(2).transactionId());
         }
 
         @Test
         @DisplayName("should preserve order during list mapping")
         void shouldPreserveOrder() {
             List<TransactionEntity> entities = List.of(
-                createEntity("TRX-Z", "PENDING"),
-                createEntity("TRX-A", "PENDING"),
-                createEntity("TRX-M", "PENDING")
+                createEntity(TRANSACTION_ID_TRX_Z, PROCESSING_STATUS_PENDING),
+                createEntity(TRANSACTION_ID_TRX_A, PROCESSING_STATUS_PENDING),
+                createEntity(TRANSACTION_ID_TRX_M, PROCESSING_STATUS_PENDING)
             );
 
             List<Transaction> domains = mapper.toDomainList(entities);
 
-            assertEquals("TRX-Z", domains.get(0).transactionId());
-            assertEquals("TRX-A", domains.get(1).transactionId());
-            assertEquals("TRX-M", domains.get(2).transactionId());
+            assertEquals(TRANSACTION_ID_TRX_Z, domains.get(0).transactionId());
+            assertEquals(TRANSACTION_ID_TRX_A, domains.get(1).transactionId());
+            assertEquals(TRANSACTION_ID_TRX_M, domains.get(2).transactionId());
         }
 
         @Test
@@ -368,23 +369,23 @@ class TransactionMapperTest {
                 () -> mapper.toDomainList(null)
             );
 
-            assertEquals("NULL_MAPPING", exception.getValidationCode());
+            assertEquals(EXCEPTION_CODE_NULL_MAPPING, exception.getValidationCode());
         }
 
         @Test
         @DisplayName("should handle large collections efficiently")
         void shouldHandleLargeCollections() {
             List<TransactionEntity> entities = new java.util.ArrayList<>();
-            for (int i = 0; i < 10000; i++) {
-                entities.add(createEntity("TRX-" + i, "PENDING"));
+            for (int i = 0; i < LIST_SIZE_10000; i++) {
+                entities.add(createEntity("TRX-" + i, PROCESSING_STATUS_PENDING));
             }
 
             long startTime = System.currentTimeMillis();
             List<Transaction> domains = mapper.toDomainList(entities);
             long duration = System.currentTimeMillis() - startTime;
 
-            assertEquals(10000, domains.size());
-            assertTrue(duration < 5000, "Mapping 10000 entities took too long: " + duration + "ms");
+            assertEquals(LIST_SIZE_10000, domains.size());
+            assertTrue(duration < PERFORMANCE_TIME_THRESHOLD, "Mapping 10000 entities took too long: " + duration + "ms");
         }
     }
 
@@ -401,12 +402,12 @@ class TransactionMapperTest {
             );
 
             Transaction original = new Transaction(
-                "TRX001",
-                "ACC123",
-                new BigDecimal("999.99"),
-                "USD",
+                TRANSACTION_ID_TRX001,
+                ACCOUNT_ID_ACC_123,
+                AMOUNT_999_99,
+                VALID_CURRENCY,
                 originalTimestamp,
-                "SOURCE",
+                SOURCE_GENERIC,
                 Transaction.TransactionStatus.PENDING
             );
 
@@ -434,11 +435,11 @@ class TransactionMapperTest {
     private Transaction createTransaction(String transactionId, Transaction.TransactionStatus status) {
         return new Transaction(
             transactionId,
-            "ACC-123",
-            new BigDecimal("100.00"),
-            "USD",
+            ACCOUNT_ID_ACC_456,
+            AMOUNT_100,
+            VALID_CURRENCY,
             OffsetDateTime.now(ZoneOffset.UTC),
-            "TEST_SOURCE",
+            SOURCE_TEST_SOURCE,
             status
         );
     }
@@ -446,10 +447,10 @@ class TransactionMapperTest {
     private TransactionEntity createEntity(String transactionId, String status) {
         return new TransactionEntity(
             transactionId,
-            "ACC-123",
-            new BigDecimal("100.00"),
-            "USD",
-            "TEST_SOURCE",
+            ACCOUNT_ID_ACC_456,
+            AMOUNT_100,
+            VALID_CURRENCY,
+            SOURCE_TEST_SOURCE,
             Instant.now(),
             status,
             Instant.now()

@@ -5,31 +5,23 @@ import com.alexsandroandre.tradecore.domain.validation.DomainValidationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 class SourceRuleTest {
 
     private SourceRule rule;
+    private TransactionTestBuilder transactionBuilder;
 
     @BeforeEach
     void setUp() {
         rule = new SourceRule();
+        transactionBuilder = new TransactionTestBuilder();
     }
 
     @Test
     void shouldAcceptValidSource() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().minusHours(1),
-            "external-bank",
-            Transaction.TransactionStatus.PENDING
-        );
+        Transaction transaction = transactionBuilder.build();
 
         DomainValidationResult result = rule.validate(transaction);
 
@@ -38,91 +30,70 @@ class SourceRuleTest {
     }
 
     @Test
-    void shouldAcceptValidSourceWithDashes() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().minusHours(1),
-            "bank-api",
-            Transaction.TransactionStatus.PENDING
-        );
-
-        DomainValidationResult result = rule.validate(transaction);
-
-        assertTrue(result.isSuccess());
-    }
-
-    @Test
-    void shouldAcceptValidSourceWithUnderscores() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().minusHours(1),
-            "external_system",
-            Transaction.TransactionStatus.PENDING
-        );
-
-        DomainValidationResult result = rule.validate(transaction);
-
-        assertTrue(result.isSuccess());
-    }
-
-    @Test
     void shouldRejectNullSource() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().minusHours(1),
-            null,
-            Transaction.TransactionStatus.PENDING
-        );
+        Transaction transaction = transactionBuilder.buildWithNullSource();
 
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_SOURCE", result.validationCode());
-        assertEquals("SOURCE_RULE", result.rejectedRule());
+        assertEquals(DomainValidationResult.ValidationStatus.FAILURE, result.status());
+        assertEquals(VALIDATION_CODE_INVALID_SOURCE, result.validationCode());
+        assertEquals(REJECTED_RULE_SOURCE_RULE, result.rejectedRule());
+        assertNotNull(result.validationMessage());
     }
 
     @Test
     void shouldRejectEmptySource() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().minusHours(1),
-            "",
-            Transaction.TransactionStatus.PENDING
-        );
+        Transaction transaction = transactionBuilder.buildWithEmptySource();
 
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_SOURCE", result.validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_SOURCE, result.validationCode());
+        assertEquals(REJECTED_RULE_SOURCE_RULE, result.rejectedRule());
     }
 
     @Test
     void shouldRejectBlankSource() {
-        Transaction transaction = new Transaction(
-            "TXN-001",
-            "ACC-123",
-            new BigDecimal("100.50"),
-            "USD",
-            OffsetDateTime.now().minusHours(1),
-            "   ",
-            Transaction.TransactionStatus.PENDING
-        );
+        Transaction transaction = transactionBuilder.buildWithBlankSource();
 
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_SOURCE", result.validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_SOURCE, result.validationCode());
+        assertEquals(REJECTED_RULE_SOURCE_RULE, result.rejectedRule());
+    }
+
+    @Test
+    void shouldAcceptSourceWithSpecialCharacters() {
+        Transaction transaction = transactionBuilder
+            .withSource(SOURCE_EXTERNAL_BANK_001)
+            .build();
+
+        DomainValidationResult result = rule.validate(transaction);
+
+        assertTrue(result.isSuccess());
+    }
+
+    @Test
+    void shouldAcceptSourceWithNumbers() {
+        Transaction transaction = transactionBuilder
+            .withSource(SOURCE_123)
+            .build();
+
+        DomainValidationResult result = rule.validate(transaction);
+
+        assertTrue(result.isSuccess());
+    }
+
+    @Test
+    void shouldAcceptSourceWithUnderscores() {
+        Transaction transaction = transactionBuilder
+            .withSource(SOURCE_IMPORT_SYSTEM)
+            .build();
+
+        DomainValidationResult result = rule.validate(transaction);
+
+        assertTrue(result.isSuccess());
     }
 }

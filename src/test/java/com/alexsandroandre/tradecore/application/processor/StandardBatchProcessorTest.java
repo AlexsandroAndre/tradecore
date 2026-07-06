@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
+
 @DisplayName("StandardBatchProcessor Tests")
 class StandardBatchProcessorTest {
 
@@ -88,7 +90,7 @@ class StandardBatchProcessorTest {
     @DisplayName("should execute batch successfully with all valid transactions")
     void testExecuteBatchSuccess() {
         List<Transaction> transactions = createTransactionList(5);
-        Batch batch = new Batch("batch-1", transactions, 1000);
+        Batch batch = new Batch(BATCH_ID_BATCH_1, transactions, 1000);
 
         for (Transaction transaction : transactions) {
             when(transactionProcessor.process(transaction))
@@ -99,7 +101,7 @@ class StandardBatchProcessorTest {
 
         BatchProcessingResult result = batchProcessor.executeBatch(batch);
 
-        assertEquals("batch-1", result.batchId());
+        assertEquals(BATCH_ID_BATCH_1, result.batchId());
         assertEquals(BatchProcessingResult.BatchStatus.SUCCESS, result.status());
         assertEquals(5, result.processedCount());
         assertEquals(0, result.failedCount());
@@ -112,7 +114,7 @@ class StandardBatchProcessorTest {
     @DisplayName("should handle partial batch failure")
     void testExecuteBatchPartialFailure() {
         List<Transaction> transactions = createTransactionList(5);
-        Batch batch = new Batch("batch-1", transactions, 1000);
+        Batch batch = new Batch(BATCH_ID_BATCH_1, transactions, 1000);
 
         Transaction txn1 = transactions.get(0);
         Transaction txn2 = transactions.get(1);
@@ -125,19 +127,19 @@ class StandardBatchProcessorTest {
         when(transactionProcessor.process(txn2))
             .thenReturn(TransactionProcessor.ProcessingResult.failure(
                 txn2.asFailed(),
-                "INVALID_AMOUNT",
-                "Amount must be positive"
+                VALIDATION_CODE_INVALID_AMOUNT,
+                ERROR_MESSAGE_AMOUNT_MUST_BE_POSITIVE
             ));
         when(transactionProcessor.process(txn3))
             .thenReturn(TransactionProcessor.ProcessingResult.success(txn3.asCompleted()));
         when(transactionProcessor.process(txn4))
-            .thenThrow(new RuntimeException("Processing error"));
+            .thenThrow(new RuntimeException(ERROR_MESSAGE_PROCESSING_ERROR));
         when(transactionProcessor.process(txn5))
             .thenReturn(TransactionProcessor.ProcessingResult.success(txn5.asCompleted()));
 
         BatchProcessingResult result = batchProcessor.executeBatch(batch);
 
-        assertEquals("batch-1", result.batchId());
+        assertEquals(BATCH_ID_BATCH_1, result.batchId());
         assertEquals(BatchProcessingResult.BatchStatus.PARTIAL_FAILURE, result.status());
         assertEquals(3, result.processedCount());
         assertEquals(1, result.rejectedCount());
@@ -151,34 +153,34 @@ class StandardBatchProcessorTest {
     void testDetectDuplicateTransactionIds() {
         List<Transaction> transactions = new ArrayList<>();
         Transaction txn1 = new Transaction(
-            "TXN-1",
-            "ACC-1",
-            BigDecimal.valueOf(100),
-            "USD",
+            TRANSACTION_ID_TXN_1,
+            ACCOUNT_ID_ACC_1,
+            AMOUNT_100,
+            VALID_CURRENCY,
             OffsetDateTime.now(),
-            "SYSTEM",
+            SYSTEM_SOURCE,
             Transaction.TransactionStatus.PENDING
         );
         Transaction txn2 = new Transaction(
-            "TXN-1",
-            "ACC-2",
-            BigDecimal.valueOf(200),
-            "USD",
+            TRANSACTION_ID_TXN_1,
+            ACCOUNT_ID_ACC_2,
+            AMOUNT_200,
+            VALID_CURRENCY,
             OffsetDateTime.now(),
-            "SYSTEM",
+            SYSTEM_SOURCE,
             Transaction.TransactionStatus.PENDING
         );
         transactions.add(txn1);
         transactions.add(txn2);
 
-        Batch batch = new Batch("batch-1", transactions, 1000);
+        Batch batch = new Batch(BATCH_ID_BATCH_1, transactions, 1000);
 
         BatchProcessingResult result = batchProcessor.executeBatch(batch);
 
-        assertEquals("batch-1", result.batchId());
+        assertEquals(BATCH_ID_BATCH_1, result.batchId());
         assertEquals(BatchProcessingResult.BatchStatus.PARTIAL_FAILURE, result.status());
         assertTrue(result.hasErrors());
-        assertEquals("DUPLICATED_TRANSACTION_IN_BATCH", result.getErrors().getFirst().errorCode());
+        assertEquals(ERROR_CODE_DUPLICATED_TRANSACTION_IN_BATCH, result.getErrors().getFirst().errorCode());
     }
 
     @Test
@@ -188,8 +190,8 @@ class StandardBatchProcessorTest {
         List<Transaction> batch1Txns = createTransactionList(3);
         List<Transaction> batch2Txns = createTransactionList(3);
 
-        batches.add(new Batch("batch-1", batch1Txns, 1000));
-        batches.add(new Batch("batch-2", batch2Txns, 1000));
+        batches.add(new Batch(BATCH_ID_BATCH_1, batch1Txns, 1000));
+        batches.add(new Batch(BATCH_ID_BATCH_2, batch2Txns, 1000));
 
         for (Transaction transaction : batch1Txns) {
             when(transactionProcessor.process(transaction))
@@ -217,7 +219,7 @@ class StandardBatchProcessorTest {
     @Test
     @DisplayName("should handle empty batch")
     void testExecuteEmptyBatch() {
-        Batch emptyBatch = new Batch("batch-1", new ArrayList<>(), 1000);
+        Batch emptyBatch = new Batch(BATCH_ID_BATCH_1, new ArrayList<>(), 1000);
 
         BatchProcessingResult result = batchProcessor.executeBatch(emptyBatch);
 
@@ -228,7 +230,7 @@ class StandardBatchProcessorTest {
     @DisplayName("should isolate failures per record without stopping processing")
     void testIsolateFailuresPerRecord() {
         List<Transaction> transactions = createTransactionList(5);
-        Batch batch = new Batch("batch-1", transactions, 1000);
+        Batch batch = new Batch(BATCH_ID_BATCH_1, transactions, 1000);
 
         for (int i = 0; i < transactions.size(); i++) {
             Transaction txn = transactions.get(i);
@@ -237,7 +239,7 @@ class StandardBatchProcessorTest {
                     .thenReturn(TransactionProcessor.ProcessingResult.success(txn.asCompleted()));
             } else {
                 when(transactionProcessor.process(txn))
-                    .thenThrow(new RuntimeException("Database error"));
+                    .thenThrow(new RuntimeException(ERROR_MESSAGE_DATABASE_ERROR));
             }
         }
 
@@ -252,7 +254,7 @@ class StandardBatchProcessorTest {
     @DisplayName("should record execution time")
     void testRecordExecutionTime() {
         List<Transaction> transactions = createTransactionList(2);
-        Batch batch = new Batch("batch-1", transactions, 1000);
+        Batch batch = new Batch(BATCH_ID_BATCH_1, transactions, 1000);
 
         for (Transaction transaction : transactions) {
             when(transactionProcessor.process(transaction))
@@ -270,7 +272,7 @@ class StandardBatchProcessorTest {
     @DisplayName("should aggregate errors correctly")
     void testAggregateErrorsCorrectly() {
         List<Transaction> transactions = createTransactionList(3);
-        Batch batch = new Batch("batch-1", transactions, 1000);
+        Batch batch = new Batch(BATCH_ID_BATCH_1, transactions, 1000);
 
         Transaction txn1 = transactions.get(0);
         Transaction txn2 = transactions.get(1);
@@ -279,11 +281,11 @@ class StandardBatchProcessorTest {
         when(transactionProcessor.process(txn1))
             .thenReturn(TransactionProcessor.ProcessingResult.failure(
                 txn1.asFailed(),
-                "INVALID_AMOUNT",
-                "Amount must be positive"
+                VALIDATION_CODE_INVALID_AMOUNT,
+                ERROR_MESSAGE_AMOUNT_MUST_BE_POSITIVE
             ));
         when(transactionProcessor.process(txn2))
-            .thenThrow(new RuntimeException("Connection timeout"));
+            .thenThrow(new RuntimeException(ERROR_MESSAGE_CONNECTION_TIMEOUT));
         when(transactionProcessor.process(txn3))
             .thenReturn(TransactionProcessor.ProcessingResult.success(txn3.asCompleted()));
 
@@ -291,9 +293,9 @@ class StandardBatchProcessorTest {
 
         assertEquals(2, result.getErrors().size());
         assertTrue(result.getErrors().stream()
-            .anyMatch(e -> "VALIDATION_FAILURE".equals(e.errorCode())));
+            .anyMatch(e -> ERROR_CODE_VALIDATION_FAILURE.equals(e.errorCode())));
         assertTrue(result.getErrors().stream()
-            .anyMatch(e -> "PROCESSING_ERROR".equals(e.errorCode())));
+            .anyMatch(e -> ERROR_CODE_PROCESSING_ERROR.equals(e.errorCode())));
     }
 
     private List<Transaction> createTransactionList(int count) {
@@ -303,10 +305,10 @@ class StandardBatchProcessorTest {
                 new Transaction(
                     "TXN-" + (i + 1),
                     "ACC-" + (i + 1),
-                    BigDecimal.valueOf(100.00 + i),
-                    "USD",
+                    AMOUNT_100.add(BigDecimal.valueOf(i)),
+                    VALID_CURRENCY,
                     OffsetDateTime.now(),
-                    "SYSTEM",
+                    SYSTEM_SOURCE,
                     Transaction.TransactionStatus.PENDING
                 )
             );
