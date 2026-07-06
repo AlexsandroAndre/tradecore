@@ -42,6 +42,13 @@ management:
     health:
       show-details: when-authorized
 
+persistence:
+  batch:
+    batch-size: ${BATCH_SIZE:500}
+    flush-after-batch: true
+    clear-context-after-flush: true
+    order-inserts: true
+
 ---
 spring:
   config:
