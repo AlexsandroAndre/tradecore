@@ -157,7 +157,7 @@ class StreamPipelineEngineTest {
 
         ProcessingReport report = engine.execute(transactions.stream());
 
-        assertTrue(report.executionTimeMillis() >= 0);
+        assertTrue(report.duration() >= 0);
     }
 
     @Test
