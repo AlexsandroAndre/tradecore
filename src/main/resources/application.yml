@@ -1,6 +1,29 @@
 spring:
   application:
     name: tradecore
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/financial_processor}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 20
+          fetch_size: 50
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
 
 server:
   port: ${SERVER_PORT:8080}
@@ -19,11 +42,22 @@ management:
     health:
       show-details: when-authorized
 
+persistence:
+  batch:
+    batch-size: ${BATCH_SIZE:500}
+    flush-after-batch: true
+    clear-context-after-flush: true
+    order-inserts: true
+
 ---
 spring:
   config:
     activate:
       on-profile: dev
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:db/schema.sql
 
 logging:
   level:
@@ -34,6 +68,11 @@ spring:
   config:
     activate:
       on-profile: test
+  datasource:
+    url: jdbc:postgresql://localhost:5432/financial_processor_test
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
 
 ---
 spring:
