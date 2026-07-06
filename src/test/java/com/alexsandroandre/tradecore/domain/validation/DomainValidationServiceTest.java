@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 class DomainValidationServiceTest {
 
@@ -38,7 +39,7 @@ class DomainValidationServiceTest {
         DomainValidationResult result = service.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_TRANSACTION_ID", result.validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_TRANSACTION_ID, result.validationCode());
     }
 
     @Test
@@ -48,7 +49,7 @@ class DomainValidationServiceTest {
         DomainValidationResult result = service.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_ACCOUNT_ID", result.validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_ACCOUNT_ID, result.validationCode());
     }
 
     @Test
@@ -58,7 +59,7 @@ class DomainValidationServiceTest {
         DomainValidationResult result = service.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_AMOUNT", result.validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_AMOUNT, result.validationCode());
     }
 
     @Test
@@ -68,7 +69,7 @@ class DomainValidationServiceTest {
         DomainValidationResult result = service.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_AMOUNT", result.validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_AMOUNT, result.validationCode());
     }
 
     @Test
@@ -78,7 +79,7 @@ class DomainValidationServiceTest {
         DomainValidationResult result = service.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("UNSUPPORTED_CURRENCY", result.validationCode());
+        assertEquals(VALIDATION_CODE_UNSUPPORTED_CURRENCY, result.validationCode());
     }
 
     @Test
@@ -88,7 +89,7 @@ class DomainValidationServiceTest {
         DomainValidationResult result = service.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_TIMESTAMP", result.validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_TIMESTAMP, result.validationCode());
     }
 
     @Test
@@ -98,46 +99,46 @@ class DomainValidationServiceTest {
         DomainValidationResult result = service.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_SOURCE", result.validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_SOURCE, result.validationCode());
     }
 
     @Test
     void shouldDetectDuplicateTransactions() {
         Transaction transaction1 = transactionBuilder
-            .withTransactionId("TXN-001")
+            .withTransactionId(TRANSACTION_ID_TXN_001)
             .build();
 
         DomainValidationResult result1 = service.validate(transaction1);
         assertTrue(result1.isSuccess());
 
         Transaction transaction2 = transactionBuilder
-            .withTransactionId("TXN-001")
-            .withAccountId("ACC-456")
+            .withTransactionId(TRANSACTION_ID_TXN_001)
+            .withAccountId(ACCOUNT_ID_ACC_456)
             .build();
 
         DomainValidationResult result2 = service.validate(transaction2);
         assertTrue(result2.isFailure());
-        assertEquals("DUPLICATED_TRANSACTION", result2.validationCode());
+        assertEquals(VALIDATION_CODE_DUPLICATED_TRANSACTION, result2.validationCode());
     }
 
     @Test
     void shouldValidateBatchOfValidTransactions() {
         List<Transaction> transactions = new ArrayList<>();
         transactions.add(transactionBuilder
-            .withTransactionId("TXN-001")
+            .withTransactionId(TRANSACTION_ID_TXN_001)
             .build());
         transactions.add(transactionBuilder
-            .withTransactionId("TXN-002")
-            .withCurrency("EUR")
+            .withTransactionId(TRANSACTION_ID_TXN_002)
+            .withCurrency(CURRENCY_EUR)
             .build());
         transactions.add(transactionBuilder
-            .withTransactionId("TXN-003")
-            .withCurrency("GBP")
+            .withTransactionId(TRANSACTION_ID_TXN_003)
+            .withCurrency(CURRENCY_GBP)
             .build());
 
         List<DomainValidationResult> results = service.validateBatch(transactions);
 
-        assertEquals(3, results.size());
+        assertEquals(LIST_SIZE_3, results.size());
         assertTrue(results.get(0).isSuccess());
         assertTrue(results.get(1).isSuccess());
         assertTrue(results.get(2).isSuccess());
@@ -147,43 +148,43 @@ class DomainValidationServiceTest {
     void shouldValidateBatchWithSomeInvalidTransactions() {
         List<Transaction> transactions = new ArrayList<>();
         transactions.add(transactionBuilder
-            .withTransactionId("TXN-001")
+            .withTransactionId(TRANSACTION_ID_TXN_001)
             .build());
         transactions.add(transactionBuilder
-            .withTransactionId("TXN-002")
+            .withTransactionId(TRANSACTION_ID_TXN_002)
             .buildWithZeroAmount());
         transactions.add(transactionBuilder
-            .withTransactionId("TXN-003")
+            .withTransactionId(TRANSACTION_ID_TXN_003)
             .buildWithUnsupportedCurrency());
 
         List<DomainValidationResult> results = service.validateBatch(transactions);
 
-        assertEquals(3, results.size());
+        assertEquals(LIST_SIZE_3, results.size());
         assertTrue(results.get(0).isSuccess());
         assertTrue(results.get(1).isFailure());
-        assertEquals("INVALID_AMOUNT", results.get(1).validationCode());
+        assertEquals(VALIDATION_CODE_INVALID_AMOUNT, results.get(1).validationCode());
         assertTrue(results.get(2).isFailure());
-        assertEquals("UNSUPPORTED_CURRENCY", results.get(2).validationCode());
+        assertEquals(VALIDATION_CODE_UNSUPPORTED_CURRENCY, results.get(2).validationCode());
     }
 
     @Test
     void shouldAllowMultipleValidTransactionsWithDifferentIds() {
         Transaction transaction1 = transactionBuilder
-            .withTransactionId("TXN-001")
+            .withTransactionId(TRANSACTION_ID_TXN_001)
             .build();
         DomainValidationResult result1 = service.validate(transaction1);
         assertTrue(result1.isSuccess());
 
         Transaction transaction2 = transactionBuilder
-            .withTransactionId("TXN-002")
-            .withCurrency("EUR")
+            .withTransactionId(TRANSACTION_ID_TXN_002)
+            .withCurrency(CURRENCY_EUR)
             .build();
         DomainValidationResult result2 = service.validate(transaction2);
         assertTrue(result2.isSuccess());
 
         Transaction transaction3 = transactionBuilder
-            .withTransactionId("TXN-003")
-            .withCurrency("GBP")
+            .withTransactionId(TRANSACTION_ID_TXN_003)
+            .withCurrency(CURRENCY_GBP)
             .build();
         DomainValidationResult result3 = service.validate(transaction3);
         assertTrue(result3.isSuccess());
@@ -197,8 +198,8 @@ class DomainValidationServiceTest {
         DomainValidationResult result = service.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_TRANSACTION_ID", result.validationCode());
-        assertEquals("TRANSACTION_ID_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_INVALID_TRANSACTION_ID, result.validationCode());
+        assertEquals(REJECTED_RULE_TRANSACTION_ID_RULE, result.rejectedRule());
     }
 
     @Test

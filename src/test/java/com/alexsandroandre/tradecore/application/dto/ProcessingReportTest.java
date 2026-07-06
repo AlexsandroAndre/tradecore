@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 @DisplayName("ProcessingReport Model Tests")
 class ProcessingReportTest {
@@ -11,173 +12,171 @@ class ProcessingReportTest {
     @Test
     @DisplayName("Should calculate duration correctly")
     void shouldCalculateDurationCorrectly() {
-        long startTime = 1000;
-        long endTime = 5000;
         ProcessingReport report = ProcessingReport.builder()
-            .executionId("exec-1")
-            .startTime(startTime)
-            .endTime(endTime)
-            .totalRecords(100)
-            .successfulRecords(90)
-            .rejectedRecords(5)
-            .failedRecords(5)
-            .persistedRecords(90)
-            .throughput(20000)
+            .executionId(EXECUTION_ID_EXEC_1)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_5000)
+            .totalRecords(TOTAL_RECORDS_100)
+            .successfulRecords(SUCCESSFUL_RECORDS_90)
+            .rejectedRecords(REJECTED_RECORDS_5)
+            .failedRecords(FAILED_RECORDS_5)
+            .persistedRecords(PERSISTED_RECORDS_90)
+            .throughput(THROUGHPUT_20000)
             .build();
 
-        assertEquals(4000, report.duration());
+        assertEquals(DURATION_4000, report.duration());
     }
 
     @Test
     @DisplayName("Should calculate validation success rate correctly")
     void shouldCalculateValidationSuccessRateCorrectly() {
         ProcessingReport report = ProcessingReport.builder()
-            .executionId("exec-1")
-            .startTime(1000)
-            .endTime(2000)
-            .totalRecords(100)
-            .successfulRecords(80)
-            .rejectedRecords(10)
-            .failedRecords(10)
-            .persistedRecords(80)
-            .throughput(100000)
+            .executionId(EXECUTION_ID_EXEC_1)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_2000)
+            .totalRecords(TOTAL_RECORDS_100)
+            .successfulRecords(SUCCESSFUL_RECORDS_80)
+            .rejectedRecords(REJECTED_RECORDS_10)
+            .failedRecords(FAILED_RECORDS_10)
+            .persistedRecords(PERSISTED_RECORDS_80)
+            .throughput(THROUGHPUT_100000)
             .build();
 
         double rate = report.validationSuccessRate();
-        assertEquals(0.8, rate, 0.0001);
+        assertEquals(RATE_0_8, rate, RATE_DELTA);
     }
 
     @Test
     @DisplayName("Should calculate validation failure rate correctly")
     void shouldCalculateValidationFailureRateCorrectly() {
         ProcessingReport report = ProcessingReport.builder()
-            .executionId("exec-1")
-            .startTime(1000)
-            .endTime(2000)
-            .totalRecords(100)
-            .successfulRecords(80)
-            .rejectedRecords(20)
-            .failedRecords(0)
-            .persistedRecords(80)
-            .throughput(100000)
+            .executionId(EXECUTION_ID_EXEC_1)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_2000)
+            .totalRecords(TOTAL_RECORDS_100)
+            .successfulRecords(SUCCESSFUL_RECORDS_80)
+            .rejectedRecords(REJECTED_RECORDS_20)
+            .failedRecords(FAILED_RECORDS_0)
+            .persistedRecords(PERSISTED_RECORDS_80)
+            .throughput(THROUGHPUT_100000)
             .build();
 
         double rate = report.validationFailureRate();
-        assertEquals(0.2, rate, 0.0001);
+        assertEquals(RATE_0_2, rate, RATE_DELTA);
     }
 
     @Test
     @DisplayName("Should calculate persistence success rate correctly")
     void shouldCalculatePersistenceSuccessRateCorrectly() {
         ProcessingReport report = ProcessingReport.builder()
-            .executionId("exec-1")
-            .startTime(1000)
-            .endTime(2000)
-            .totalRecords(100)
-            .successfulRecords(100)
-            .rejectedRecords(0)
-            .failedRecords(0)
-            .persistedRecords(95)
-            .throughput(100000)
+            .executionId(EXECUTION_ID_EXEC_1)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_2000)
+            .totalRecords(TOTAL_RECORDS_100)
+            .successfulRecords(SUCCESSFUL_RECORDS_100)
+            .rejectedRecords(REJECTED_RECORDS_0)
+            .failedRecords(FAILED_RECORDS_0)
+            .persistedRecords(PERSISTED_RECORDS_95)
+            .throughput(THROUGHPUT_100000)
             .build();
 
         double rate = report.persistenceSuccessRate();
-        assertEquals(0.95, rate, 0.0001);
+        assertEquals(RATE_0_95, rate, RATE_DELTA);
     }
 
     @Test
     @DisplayName("Should calculate average processing time per record correctly")
     void shouldCalculateAverageProcessingTimePerRecordCorrectly() {
         ProcessingReport report = ProcessingReport.builder()
-            .executionId("exec-1")
-            .startTime(1000)
-            .endTime(6000)
-            .totalRecords(100)
-            .successfulRecords(100)
-            .rejectedRecords(0)
-            .failedRecords(0)
-            .persistedRecords(100)
-            .throughput(20000)
+            .executionId(EXECUTION_ID_EXEC_1)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_6000)
+            .totalRecords(TOTAL_RECORDS_100)
+            .successfulRecords(SUCCESSFUL_RECORDS_100)
+            .rejectedRecords(REJECTED_RECORDS_0)
+            .failedRecords(FAILED_RECORDS_0)
+            .persistedRecords(PERSISTED_RECORDS_100)
+            .throughput(THROUGHPUT_20000)
             .build();
 
         double avgTime = report.averageProcessingTimePerRecord();
-        assertEquals(50.0, avgTime, 0.0001);
+        assertEquals(RATE_50_0, avgTime, RATE_DELTA);
     }
 
     @Test
     @DisplayName("Should return zero rates when no records")
     void shouldReturnZeroRatesWhenNoRecords() {
         ProcessingReport report = ProcessingReport.builder()
-            .executionId("exec-1")
-            .startTime(1000)
-            .endTime(2000)
-            .totalRecords(0)
-            .successfulRecords(0)
-            .rejectedRecords(0)
-            .failedRecords(0)
-            .persistedRecords(0)
-            .throughput(0)
+            .executionId(EXECUTION_ID_EXEC_1)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_2000)
+            .totalRecords(TOTAL_RECORDS_0)
+            .successfulRecords(SUCCESSFUL_RECORDS_0)
+            .rejectedRecords(REJECTED_RECORDS_0)
+            .failedRecords(FAILED_RECORDS_0)
+            .persistedRecords(PERSISTED_RECORDS_0)
+            .throughput(THROUGHPUT_0)
             .build();
 
-        assertEquals(0.0, report.validationSuccessRate());
-        assertEquals(0.0, report.validationFailureRate());
-        assertEquals(0.0, report.persistenceSuccessRate());
-        assertEquals(0.0, report.averageProcessingTimePerRecord());
+        assertEquals(RATE_0_0, report.validationSuccessRate());
+        assertEquals(RATE_0_0, report.validationFailureRate());
+        assertEquals(RATE_0_0, report.persistenceSuccessRate());
+        assertEquals(RATE_0_0, report.averageProcessingTimePerRecord());
     }
 
     @Test
     @DisplayName("Should create empty report with execution ID")
     void shouldCreateEmptyReportWithExecutionId() {
-        ProcessingReport report = ProcessingReport.empty("test-exec");
+        ProcessingReport report = ProcessingReport.empty(EXECUTION_ID_TEST_EXEC);
 
-        assertEquals("test-exec", report.executionId());
-        assertEquals(0, report.totalRecords());
-        assertEquals(0, report.successfulRecords());
-        assertEquals(0, report.rejectedRecords());
-        assertEquals(0, report.failedRecords());
-        assertEquals(0, report.persistedRecords());
-        assertEquals(0, report.throughput());
+        assertEquals(EXECUTION_ID_TEST_EXEC, report.executionId());
+        assertEquals(TOTAL_RECORDS_0, report.totalRecords());
+        assertEquals(SUCCESSFUL_RECORDS_0, report.successfulRecords());
+        assertEquals(REJECTED_RECORDS_0, report.rejectedRecords());
+        assertEquals(FAILED_RECORDS_0, report.failedRecords());
+        assertEquals(PERSISTED_RECORDS_0, report.persistedRecords());
+        assertEquals(THROUGHPUT_0, report.throughput());
     }
 
     @Test
     @DisplayName("Should build report with builder pattern")
     void shouldBuildReportWithBuilderPattern() {
         ProcessingReport report = ProcessingReport.builder()
-            .executionId("exec-123")
-            .startTime(1000)
-            .endTime(2000)
-            .totalRecords(50)
-            .successfulRecords(45)
-            .rejectedRecords(3)
-            .failedRecords(2)
-            .persistedRecords(45)
-            .throughput(50000)
+            .executionId(EXECUTION_ID_EXEC_123)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_2000)
+            .totalRecords(TOTAL_RECORDS_50)
+            .successfulRecords(SUCCESSFUL_RECORDS_45)
+            .rejectedRecords(REJECTED_RECORDS_3)
+            .failedRecords(FAILED_RECORDS_2)
+            .persistedRecords(PERSISTED_RECORDS_45)
+            .throughput(THROUGHPUT_50000)
             .build();
 
-        assertEquals("exec-123", report.executionId());
-        assertEquals(1000, report.startTime());
-        assertEquals(2000, report.endTime());
-        assertEquals(50, report.totalRecords());
-        assertEquals(45, report.successfulRecords());
-        assertEquals(3, report.rejectedRecords());
-        assertEquals(2, report.failedRecords());
-        assertEquals(45, report.persistedRecords());
-        assertEquals(50000, report.throughput());
+        assertEquals(EXECUTION_ID_EXEC_123, report.executionId());
+        assertEquals(START_TIME_1000, report.startTime());
+        assertEquals(END_TIME_2000, report.endTime());
+        assertEquals(TOTAL_RECORDS_50, report.totalRecords());
+        assertEquals(SUCCESSFUL_RECORDS_45, report.successfulRecords());
+        assertEquals(REJECTED_RECORDS_3, report.rejectedRecords());
+        assertEquals(FAILED_RECORDS_2, report.failedRecords());
+        assertEquals(PERSISTED_RECORDS_45, report.persistedRecords());
+        assertEquals(THROUGHPUT_50000, report.throughput());
     }
 
     @Test
     @DisplayName("Should validate all required fields in report")
     void shouldValidateAllRequiredFieldsInReport() {
         ProcessingReport report = ProcessingReport.builder()
-            .executionId("exec-1")
-            .startTime(1000)
-            .endTime(2000)
-            .totalRecords(100)
-            .successfulRecords(80)
-            .rejectedRecords(10)
-            .failedRecords(10)
-            .persistedRecords(80)
-            .throughput(100000)
+            .executionId(EXECUTION_ID_EXEC_1)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_2000)
+            .totalRecords(TOTAL_RECORDS_100)
+            .successfulRecords(SUCCESSFUL_RECORDS_80)
+            .rejectedRecords(REJECTED_RECORDS_10)
+            .failedRecords(FAILED_RECORDS_10)
+            .persistedRecords(PERSISTED_RECORDS_80)
+            .throughput(THROUGHPUT_100000)
             .build();
 
         assertNotNull(report.executionId());
@@ -195,19 +194,19 @@ class ProcessingReportTest {
     @DisplayName("Should be immutable record")
     void shouldBeImmutableRecord() {
         ProcessingReport report1 = ProcessingReport.builder()
-            .executionId("exec-1")
-            .startTime(1000)
-            .endTime(2000)
-            .totalRecords(100)
-            .successfulRecords(100)
-            .rejectedRecords(0)
-            .failedRecords(0)
-            .persistedRecords(100)
-            .throughput(100000)
+            .executionId(EXECUTION_ID_EXEC_1)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_2000)
+            .totalRecords(TOTAL_RECORDS_100)
+            .successfulRecords(SUCCESSFUL_RECORDS_100)
+            .rejectedRecords(REJECTED_RECORDS_0)
+            .failedRecords(FAILED_RECORDS_0)
+            .persistedRecords(PERSISTED_RECORDS_100)
+            .throughput(THROUGHPUT_100000)
             .build();
 
         ProcessingReport report2 = new ProcessingReport(
-            "exec-1", 1000, 2000, 100, 100, 0, 0, 100, 100000
+            EXECUTION_ID_EXEC_1, START_TIME_1000, END_TIME_2000, TOTAL_RECORDS_100, SUCCESSFUL_RECORDS_100, REJECTED_RECORDS_0, FAILED_RECORDS_0, PERSISTED_RECORDS_100, THROUGHPUT_100000
         );
 
         assertEquals(report1.executionId(), report2.executionId());
@@ -218,17 +217,19 @@ class ProcessingReportTest {
     @DisplayName("Should handle zero successful records for persistence rate")
     void shouldHandleZeroSuccessfulRecordsForPersistenceRate() {
         ProcessingReport report = ProcessingReport.builder()
-            .executionId("exec-1")
-            .startTime(1000)
-            .endTime(2000)
-            .totalRecords(10)
-            .successfulRecords(0)
-            .rejectedRecords(10)
-            .failedRecords(0)
-            .persistedRecords(0)
-            .throughput(0)
+            .executionId(EXECUTION_ID_EXEC_1)
+            .startTime(START_TIME_1000)
+            .endTime(END_TIME_2000)
+            .totalRecords(TOTAL_RECORDS_10)
+            .successfulRecords(SUCCESSFUL_RECORDS_0)
+            .rejectedRecords(REJECTED_RECORDS_10)
+            .failedRecords(FAILED_RECORDS_0)
+            .persistedRecords(PERSISTED_RECORDS_0)
+            .throughput(THROUGHPUT_0)
             .build();
 
-        assertEquals(0.0, report.persistenceSuccessRate());
+        assertEquals(RATE_0_0, report.persistenceSuccessRate());
     }
+
+
 }

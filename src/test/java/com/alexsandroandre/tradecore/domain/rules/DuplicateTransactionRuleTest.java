@@ -9,11 +9,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 class DuplicateTransactionRuleTest {
-
-    private static final String EXISTING_TRANSACTION_ID = "TXN-001";
-    private static final String NEW_TRANSACTION_ID = "TXN-NEW";
 
     private DuplicateTransactionRule rule;
     private Set<String> processedTransactionIds;
@@ -29,7 +27,7 @@ class DuplicateTransactionRuleTest {
     @Test
     void shouldAcceptNewTransaction() {
         Transaction transaction = transactionBuilder
-            .withTransactionId(NEW_TRANSACTION_ID)
+            .withTransactionId(TRANSACTION_ID_NEW)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
@@ -40,46 +38,46 @@ class DuplicateTransactionRuleTest {
 
     @Test
     void shouldRejectDuplicateTransaction() {
-        processedTransactionIds.add(EXISTING_TRANSACTION_ID);
+        processedTransactionIds.add(TRANSACTION_ID_TXN_001);
         Transaction transaction = transactionBuilder
-            .withTransactionId(EXISTING_TRANSACTION_ID)
+            .withTransactionId(TRANSACTION_ID_TXN_001)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
         assertEquals(DomainValidationResult.ValidationStatus.FAILURE, result.status());
-        assertEquals("DUPLICATED_TRANSACTION", result.validationCode());
-        assertEquals("DUPLICATE_TRANSACTION_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_DUPLICATED_TRANSACTION, result.validationCode());
+        assertEquals(REJECTED_RULE_DUPLICATE_TRANSACTION_RULE, result.rejectedRule());
         assertNotNull(result.validationMessage());
     }
 
     @Test
     void shouldMarkProcessedTransaction() {
         Transaction transaction = transactionBuilder
-            .withTransactionId("TXN-MARK")
+            .withTransactionId(TRANSACTION_ID_MARK)
             .build();
 
         rule.validate(transaction);
         rule.markAsProcessed(transaction.transactionId());
 
-        assertTrue(processedTransactionIds.contains("TXN-MARK"));
+        assertTrue(processedTransactionIds.contains(TRANSACTION_ID_MARK));
     }
 
     @Test
     void shouldRejectMultipleDuplicates() {
-        processedTransactionIds.add("TXN-A");
-        processedTransactionIds.add("TXN-B");
-        processedTransactionIds.add("TXN-C");
+        processedTransactionIds.add(TRANSACTION_ID_A);
+        processedTransactionIds.add(TRANSACTION_ID_B);
+        processedTransactionIds.add(TRANSACTION_ID_C);
 
         Transaction transactionA = transactionBuilder
-            .withTransactionId("TXN-A")
+            .withTransactionId(TRANSACTION_ID_A)
             .build();
         Transaction transactionB = transactionBuilder
-            .withTransactionId("TXN-B")
+            .withTransactionId(TRANSACTION_ID_B)
             .build();
         Transaction transactionC = transactionBuilder
-            .withTransactionId("TXN-C")
+            .withTransactionId(TRANSACTION_ID_C)
             .build();
 
         assertTrue(rule.validate(transactionA).isFailure());
@@ -89,11 +87,11 @@ class DuplicateTransactionRuleTest {
 
     @Test
     void shouldAcceptNewTransactionAfterMultipleDuplicates() {
-        processedTransactionIds.add("TXN-OLD-1");
-        processedTransactionIds.add("TXN-OLD-2");
+        processedTransactionIds.add(TRANSACTION_ID_OLD_1);
+        processedTransactionIds.add(TRANSACTION_ID_OLD_2);
 
         Transaction newTransaction = transactionBuilder
-            .withTransactionId("TXN-FRESH")
+            .withTransactionId(TRANSACTION_ID_FRESH)
             .build();
 
         DomainValidationResult result = rule.validate(newTransaction);
@@ -103,14 +101,13 @@ class DuplicateTransactionRuleTest {
 
     @Test
     void shouldRejectExactDuplicate() {
-        String duplicateId = "DUP-001";
-        processedTransactionIds.add(duplicateId);
+        processedTransactionIds.add(TRANSACTION_ID_DUP_001);
 
         Transaction transaction1 = transactionBuilder
-            .withTransactionId(duplicateId)
+            .withTransactionId(TRANSACTION_ID_DUP_001)
             .build();
         Transaction transaction2 = transactionBuilder
-            .withTransactionId(duplicateId)
+            .withTransactionId(TRANSACTION_ID_DUP_001)
             .build();
 
         assertTrue(rule.validate(transaction1).isFailure());

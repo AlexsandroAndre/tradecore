@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 class SourceRuleTest {
 
@@ -36,8 +37,8 @@ class SourceRuleTest {
 
         assertTrue(result.isFailure());
         assertEquals(DomainValidationResult.ValidationStatus.FAILURE, result.status());
-        assertEquals("INVALID_SOURCE", result.validationCode());
-        assertEquals("SOURCE_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_INVALID_SOURCE, result.validationCode());
+        assertEquals(REJECTED_RULE_SOURCE_RULE, result.rejectedRule());
         assertNotNull(result.validationMessage());
     }
 
@@ -48,8 +49,8 @@ class SourceRuleTest {
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_SOURCE", result.validationCode());
-        assertEquals("SOURCE_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_INVALID_SOURCE, result.validationCode());
+        assertEquals(REJECTED_RULE_SOURCE_RULE, result.rejectedRule());
     }
 
     @Test
@@ -59,14 +60,14 @@ class SourceRuleTest {
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_SOURCE", result.validationCode());
-        assertEquals("SOURCE_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_INVALID_SOURCE, result.validationCode());
+        assertEquals(REJECTED_RULE_SOURCE_RULE, result.rejectedRule());
     }
 
     @Test
     void shouldAcceptSourceWithSpecialCharacters() {
         Transaction transaction = transactionBuilder
-            .withSource("external-bank-001")
+            .withSource(SOURCE_EXTERNAL_BANK_001)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
@@ -77,7 +78,7 @@ class SourceRuleTest {
     @Test
     void shouldAcceptSourceWithNumbers() {
         Transaction transaction = transactionBuilder
-            .withSource("SOURCE123")
+            .withSource(SOURCE_123)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
@@ -88,7 +89,7 @@ class SourceRuleTest {
     @Test
     void shouldAcceptSourceWithUnderscores() {
         Transaction transaction = transactionBuilder
-            .withSource("IMPORT_SYSTEM")
+            .withSource(SOURCE_IMPORT_SYSTEM)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);

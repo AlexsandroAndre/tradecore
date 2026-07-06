@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 class TimestampRuleTest {
 
@@ -38,8 +39,8 @@ class TimestampRuleTest {
 
         assertTrue(result.isFailure());
         assertEquals(DomainValidationResult.ValidationStatus.FAILURE, result.status());
-        assertEquals("INVALID_TIMESTAMP", result.validationCode());
-        assertEquals("TIMESTAMP_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_INVALID_TIMESTAMP, result.validationCode());
+        assertEquals(REJECTED_RULE_TIMESTAMP_RULE, result.rejectedRule());
         assertNotNull(result.validationMessage());
     }
 
@@ -50,8 +51,8 @@ class TimestampRuleTest {
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_TIMESTAMP", result.validationCode());
-        assertEquals("TIMESTAMP_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_INVALID_TIMESTAMP, result.validationCode());
+        assertEquals(REJECTED_RULE_TIMESTAMP_RULE, result.rejectedRule());
     }
 
     @Test

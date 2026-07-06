@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 class CurrencyRuleTest {
 
@@ -36,8 +37,8 @@ class CurrencyRuleTest {
 
         assertTrue(result.isFailure());
         assertEquals(DomainValidationResult.ValidationStatus.FAILURE, result.status());
-        assertEquals("UNSUPPORTED_CURRENCY", result.validationCode());
-        assertEquals("CURRENCY_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_UNSUPPORTED_CURRENCY, result.validationCode());
+        assertEquals(REJECTED_RULE_CURRENCY_RULE, result.rejectedRule());
         assertNotNull(result.validationMessage());
     }
 
@@ -48,8 +49,8 @@ class CurrencyRuleTest {
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("UNSUPPORTED_CURRENCY", result.validationCode());
-        assertEquals("CURRENCY_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_UNSUPPORTED_CURRENCY, result.validationCode());
+        assertEquals(REJECTED_RULE_CURRENCY_RULE, result.rejectedRule());
     }
 
     @Test
@@ -59,8 +60,8 @@ class CurrencyRuleTest {
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("UNSUPPORTED_CURRENCY", result.validationCode());
-        assertEquals("CURRENCY_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_UNSUPPORTED_CURRENCY, result.validationCode());
+        assertEquals(REJECTED_RULE_CURRENCY_RULE, result.rejectedRule());
     }
 
     @Test
@@ -75,7 +76,7 @@ class CurrencyRuleTest {
     @Test
     void shouldAcceptEuroCurrency() {
         Transaction transaction = transactionBuilder
-            .withCurrency("EUR")
+            .withCurrency(CURRENCY_EUR)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
@@ -86,7 +87,7 @@ class CurrencyRuleTest {
     @Test
     void shouldAcceptGBPCurrency() {
         Transaction transaction = transactionBuilder
-            .withCurrency("GBP")
+            .withCurrency(CURRENCY_GBP)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
@@ -97,7 +98,7 @@ class CurrencyRuleTest {
     @Test
     void shouldAcceptJPYCurrency() {
         Transaction transaction = transactionBuilder
-            .withCurrency("JPY")
+            .withCurrency(CURRENCY_JPY)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
@@ -108,24 +109,24 @@ class CurrencyRuleTest {
     @Test
     void shouldRejectTwoLetterCurrency() {
         Transaction transaction = transactionBuilder
-            .withCurrency("US")
+            .withCurrency(CURRENCY_TWO_LETTER)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("UNSUPPORTED_CURRENCY", result.validationCode());
+        assertEquals(VALIDATION_CODE_UNSUPPORTED_CURRENCY, result.validationCode());
     }
 
     @Test
     void shouldRejectEmptyCurrency() {
         Transaction transaction = transactionBuilder
-            .withCurrency("")
+            .withCurrency(CURRENCY_EMPTY)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("UNSUPPORTED_CURRENCY", result.validationCode());
+        assertEquals(VALIDATION_CODE_UNSUPPORTED_CURRENCY, result.validationCode());
     }
 }

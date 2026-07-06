@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.alexsandroandre.tradecore.infrastructure.persistence.constants.IntegrationTestConstants.*;
 
 class AmountRuleTest {
 
@@ -38,8 +39,8 @@ class AmountRuleTest {
 
         assertTrue(result.isFailure());
         assertEquals(DomainValidationResult.ValidationStatus.FAILURE, result.status());
-        assertEquals("INVALID_AMOUNT", result.validationCode());
-        assertEquals("AMOUNT_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_INVALID_AMOUNT, result.validationCode());
+        assertEquals(REJECTED_RULE_AMOUNT_RULE, result.rejectedRule());
         assertNotNull(result.validationMessage());
     }
 
@@ -50,8 +51,8 @@ class AmountRuleTest {
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_AMOUNT", result.validationCode());
-        assertEquals("AMOUNT_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_INVALID_AMOUNT, result.validationCode());
+        assertEquals(REJECTED_RULE_AMOUNT_RULE, result.rejectedRule());
     }
 
     @Test
@@ -61,14 +62,14 @@ class AmountRuleTest {
         DomainValidationResult result = rule.validate(transaction);
 
         assertTrue(result.isFailure());
-        assertEquals("INVALID_AMOUNT", result.validationCode());
-        assertEquals("AMOUNT_RULE", result.rejectedRule());
+        assertEquals(VALIDATION_CODE_INVALID_AMOUNT, result.validationCode());
+        assertEquals(REJECTED_RULE_AMOUNT_RULE, result.rejectedRule());
     }
 
     @Test
     void shouldAcceptSmallPositiveAmount() {
         Transaction transaction = transactionBuilder
-            .withAmount(new BigDecimal("0.01"))
+            .withAmount(AMOUNT_SMALL_POSITIVE)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
@@ -79,7 +80,7 @@ class AmountRuleTest {
     @Test
     void shouldAcceptLargePositiveAmount() {
         Transaction transaction = transactionBuilder
-            .withAmount(new BigDecimal("999999999.99"))
+            .withAmount(AMOUNT_LARGE_POSITIVE)
             .build();
 
         DomainValidationResult result = rule.validate(transaction);
