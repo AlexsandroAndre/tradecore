@@ -15,8 +15,11 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/financial_processor
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - FILE_TRANSACTIONS_PATH=/app/data/transactions-20M.json
     ports:
       - "8080:8080"
+    volumes:
+      - ./data:/app/data
     networks:
       - processor-network
     restart: on-failure

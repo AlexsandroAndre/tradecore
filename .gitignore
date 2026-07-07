@@ -101,3 +101,9 @@ failsafe-reports/
 logs/
 log/
 
+### Large data files ###
+# Exclude large transaction files (> 100MB) from version control
+# but keep the directory structure
+data/*.json
+!data/transactions-simple.json
+

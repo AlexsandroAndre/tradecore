@@ -1,0 +1,7 @@
+[
+  {"transactionId":"TRX00000001","accountId":"ACC100001","amount":10.10,"currency":"EUR","timestamp":"2025-01-01T00:00:01Z","source":"WEB"},
+  {"transactionId":"TRX00000002","accountId":"ACC100002","amount":10.20,"currency":"BRL","timestamp":"2025-01-01T00:00:02Z","source":"ATM"},
+  {"transactionId":"TRX00000003","accountId":"ACC100003","amount":10.30,"currency":"GBP","timestamp":"2025-01-01T00:00:03Z","source":"POS"},
+  {"transactionId":"TRX00000004","accountId":"ACC100004","amount":10.40,"currency":"JPY","timestamp":"2025-01-01T00:00:04Z","source":"API"},
+  {"transactionId":"TRX00000005","accountId":"ACC100005","amount":10.50,"currency":"USD","timestamp":"2025-01-01T00:00:05Z","source":"MOBILE_APP"}
+]
