@@ -37,4 +37,8 @@ public final class DuplicateTransactionRule implements ValidationRule {
     public void markAsProcessed(String transactionId) {
         processedTransactionIds.add(transactionId);
     }
+
+    public void clearProcessedIds() {
+        processedTransactionIds.clear();
+    }
 }
