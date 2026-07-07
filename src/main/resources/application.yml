@@ -29,6 +29,10 @@ spring:
       max-file-size: 10GB
       max-request-size: 10GB
 
+file:
+  transactions:
+    path: ${FILE_TRANSACTIONS_PATH:./data/transactions-20M.json}
+
 server:
   port: ${SERVER_PORT:8080}
 

@@ -21,6 +21,8 @@ WORKDIR /app
 
 COPY --from=builder /build/target/*.jar application.jar
 
+COPY data data
+
 RUN chown -R appuser:appuser /app
 
 USER appuser
