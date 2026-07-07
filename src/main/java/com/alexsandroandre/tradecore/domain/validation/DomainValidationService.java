@@ -55,4 +55,8 @@ public final class DomainValidationService {
         }
         return results;
     }
+
+    public void resetProcessedIds() {
+        duplicateRule.clearProcessedIds();
+    }
 }

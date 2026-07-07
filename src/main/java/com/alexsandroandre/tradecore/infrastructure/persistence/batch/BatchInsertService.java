@@ -4,6 +4,7 @@ import com.alexsandroandre.tradecore.infrastructure.persistence.entity.Transacti
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class BatchInsertService {
         this.defaultConfiguration = BatchInsertConfiguration.withDefaults();
     }
 
+    @Transactional
     public BatchInsertResult persistTransactions(List<TransactionEntity> transactions) {
         if (transactions == null || transactions.isEmpty()) {
             logger.warn("Empty transaction list provided for batch insert");
@@ -34,6 +36,7 @@ public class BatchInsertService {
         return result;
     }
 
+    @Transactional
     public BatchInsertResult persistTransactions(
         List<TransactionEntity> transactions,
         int customBatchSize
